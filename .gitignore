@@ -543,9 +543,11 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio
 
-*.sym
-*.mdt
-*.[sS][3][mM]
+*.[sS][yY][mM]
+*.[mM][dD][tT]
+*.[sS]3[mM]
 *.[sS][tT][mM]
-*.ERR
+*.[eE][rR][rR]
 *.[bB][aA][kK]
+*.[dD][sS][kK]
+*.[sS][wW][pP]

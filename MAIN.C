@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	char *patptrarray;
 	char *instptrarray;
 
-	register unsigned char p, r, c, s, o, l = 0;
+	unsigned char p, r, c, s, o, l = 0;
 
 	unsigned char orderlen;
 	unsigned char numofpats;
@@ -105,8 +105,8 @@ int main(int argc, char *argv[]) {
 		stmheader[30] = 0x02;
 		stmheader[31] = 0x15;
 
-		/* Initital tempo (not dealing with the weird scaling factor) */
-		stmheader[32] = s3mheader[49] << 4;
+		/* Initital tempo */
+		stmheader[32] = (s3mheader[49] << 4) + ((s3mheader[50] / 125) & 0x0F);
 
 		/* Number of patterns */
 		stmheader[33] = s3mheader[36];
