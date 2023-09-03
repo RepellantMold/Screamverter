@@ -2,6 +2,11 @@
 
 Scream Tracker 3 module to Scream Tracker 2 module converter
 
+## Building
+
+It should be as simple as running your favorite compiler on `main.c`
+You can also run "nmake scream.mak" if you run Microsoft Quick C for MS-DOS.
+
 ## Requirements
 
 It'd probably be a lot to ask of one person to convert an S3M file to an STM...

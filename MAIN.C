@@ -1,12 +1,19 @@
 /*
  * Screamverter by RepellantMold (2023)
  * This code is licensed under MIT-0.
- * 
- * Tested on:
+
+ * I made sure to test this with a multitude of compilers I have available.
+
+ * Compiled on:
  * Bloodshed's Dev-C++ 5.11 (in a Windows XP virtual machine),
- * Borland Turbo C++ (MS-DOS via DOSBox-X),
+ * Microsoft Quick C (MS-DOS via DOSBox-X),
  * Tiny C Compiler (Windows 11 64-bit),
  * TDM-GCC (Windows 11 64-bit)
+
+ * Return values:
+ * 0: Success
+ * 1: Too many/not enough arguments
+ * 2: Failed to allocate memory
  */
 
 #include <stdio.h>
@@ -15,21 +22,24 @@
 
 int main(int argc, char *argv[]) {
 
-	/* This creates a whole buttload of code that you'll have to see when scrolling down
-	 * suppose it'd be at least somewhat portable? */
-	char s3mheader[96];
-	char s3minstheader[80];
-	char stmheader[1040];
-	
-	unsigned char p, r, c, s, o, l = 0;
+	/* I'm only able to write in bytes at a time,
+	and I have to dynamically allocate memory! */
+	char *s3mheader;
+	char *s3minstheader;
+	char *stmheader;
+	char *s3mpat;
+	char *stmpat;
+	char *orderarray;
+	char *patptrarray;
+	char *instptrarray;
+
+	register unsigned char p, r, c, s, o, l = 0;
 
 	unsigned char orderlen;
 	unsigned char numofpats;
 	unsigned char numofinsts;
 
 	unsigned short trackerver;
-	
-	unsigned char orderarray[255];
 	
 	puts("Screamverter\nby RepellantMold (2023)");
 
@@ -41,10 +51,17 @@ int main(int argc, char *argv[]) {
 			puts("Failed to open the file.");
 			return 1;
 		}
+
 		outstm = fopen(argv[2], "wb");
 		if (outstm == NULL) {
 			puts("Failed to write the file.");
 			return 1;
+		}
+
+		s3mheader = (char*)calloc(96, sizeof(char));
+		if (s3mheader == NULL) {
+			puts("Failed to allocate memory!");
+			return 2;
 		}
 
 		fread(s3mheader, 96, 1, ins3m);
@@ -54,8 +71,19 @@ int main(int argc, char *argv[]) {
 		orderlen = s3mheader[32];
 		numofpats = s3mheader[36];
 
-		/* Convert the song title to the STM header (though this could be problematic if the title is too long) */
+		stmheader = (char*)calloc(1040, sizeof(char));
+		if (stmheader == NULL) {
+			puts("Failed to allocate memory!");
+			return 2;
+		}
+
+		/* Copy over the title string */
 		memcpy(stmheader, s3mheader, 20);
+
+		/* add a terminator if needed */
+		if (stmheader[19] != 0) {
+			stmheader[19] = 0;
+		}
 
 		/* "!Scream!" */
 		stmheader[20] = 0x21;
@@ -87,19 +115,31 @@ int main(int argc, char *argv[]) {
 		stmheader[34] = s3mheader[48];
 		
 		/* printf("%X", ftell(ins3m)); */
+
+		orderarray = (char*)calloc(255, sizeof(char));
+		if (orderarray == NULL) {
+			puts("Failed to allocate memory for the STM header.");
+			return 2;
+		}
 		
 		fread(orderarray, sizeof(char), orderlen, ins3m);
 
 		for (; o < orderlen; ++o) {
-			if (orderarray[o] < 254) {
+			if ((unsigned char)orderarray[o] < 254) {
 				orderarray[l] = orderarray[o];
-				l++;
-				if (orderarray[o] > numofpats)
-					numofpats = orderarray[o];
+				++l;
+				if ((unsigned char)orderarray[o] > numofpats)
+					numofpats = (unsigned char)orderarray[o];
 			}
 		}
 
-		fwrite(stmheader, 1040, 1, outstm);
+		printf("Orders (excluding pattern markers) found: %u\n", l);
+
+		fwrite(stmheader, 1040, sizeof(char), outstm);
+
+		free(stmheader);
+		free(s3mheader);
+		free(orderarray);
 
 		fclose(ins3m);
 		fclose(outstm);
