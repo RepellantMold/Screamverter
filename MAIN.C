@@ -5,10 +5,10 @@
  * I made sure to test this with a multitude of compilers I have available.
 
  * Compiled on:
- * Bloodshed's Dev-C++ 5.11 (in a Windows XP virtual machine),
+ * Bloodshed's Dev-C++ 5.11 (TDM-GCC 4.9.2) (in a Windows XP virtual machine),
  * Microsoft Quick C (MS-DOS via DOSBox-X),
  * Tiny C Compiler (Windows 11 64-bit),
- * TDM-GCC (Windows 11 64-bit)
+ * TDM-GCC 10.3.0 (Windows 11 64-bit)
 
  * Return values:
  * 0: Success
@@ -24,125 +24,141 @@ int main(int argc, char *argv[]) {
 
 	/* I'm only able to write in bytes at a time,
 	and I have to dynamically allocate memory! */
-	char *s3mheader;
+	char *s3mHeader;
 	char *s3minstheader;
-	char *stmheader;
-	char *s3mpat;
-	char *stmpat;
-	char *orderarray;
-	char *patptrarray;
-	char *instptrarray;
+	char *stmHeader;
+	char *s3mPat;
+	char *stmPat;
+	char *orderArray;
+	char *patptrArray;
+	char *instptrArray;
 
 	unsigned char p, r, c, s, o, l = 0;
 
-	unsigned char orderlen;
-	unsigned char numofpats;
+	unsigned char orderLen;
+	unsigned char numofPats;
 	unsigned char numofinsts;
 
-	unsigned short trackerver;
+	unsigned char ordCnt;
+	unsigned char insCnt;
+	unsigned char patCnt;
+
+	unsigned short trackerInfo = 0;
 	
 	puts("Screamverter\nby RepellantMold (2023)");
 
 	if( argc == 3 ) {
-		FILE *ins3m;
-		FILE *outstm;
-		ins3m = fopen(argv[1], "rb");
-		if (ins3m == NULL) {
+		FILE *inS3M;
+		FILE *outSTM;
+		inS3M = fopen(argv[1], "rb");
+		if (inS3M == NULL) {
 			puts("Failed to open the file.");
 			return 1;
 		}
 
-		outstm = fopen(argv[2], "wb");
-		if (outstm == NULL) {
+		outSTM = fopen(argv[2], "wb");
+		if (outSTM == NULL) {
 			puts("Failed to write the file.");
 			return 1;
 		}
 
-		s3mheader = (char*)calloc(96, sizeof(char));
-		if (s3mheader == NULL) {
+		s3mHeader = (char*)calloc(96, sizeof(char));
+		if (s3mHeader == NULL) {
 			puts("Failed to allocate memory!");
 			return 2;
 		}
 
-		fread(s3mheader, 96, 1, ins3m);
-		
+		fread(s3mHeader, 96, 1, inS3M);
+
 		puts("Converting header...");
 
-		orderlen = s3mheader[32];
-		numofpats = s3mheader[36];
+		if (s3mHeader[44] != 'S' || s3mHeader[45] != 'C' || s3mHeader[46] != 'R' || s3mHeader[47] != 'M') {
+			puts("Not a valid S3M file.");
+			return 2;
+		}
 
-		stmheader = (char*)calloc(1040, sizeof(char));
-		if (stmheader == NULL) {
+		ordCnt = s3mHeader[32];
+		insCnt = s3mHeader[34];
+		patCnt = s3mHeader[36];
+
+		/* Little endian things... */
+		trackerInfo = ((s3mHeader[41] << 8) + s3mHeader[40]);
+
+		printf("Tracker info: %04X\n", trackerInfo);
+
+		orderLen = s3mHeader[32];
+		numofPats = s3mHeader[36];
+
+		stmHeader = (char*)calloc(1040, sizeof(char));
+		if (stmHeader == NULL) {
 			puts("Failed to allocate memory!");
 			return 2;
 		}
 
 		/* Copy over the title string */
-		memcpy(stmheader, s3mheader, 20);
+		memcpy(stmHeader, s3mHeader, 20);
 
 		/* add a terminator if needed */
-		if (stmheader[19] != 0) {
-			stmheader[19] = 0;
+		if (stmHeader[19] != 0) {
+			stmHeader[19] = 0;
 		}
 
 		/* "!Scream!" */
-		stmheader[20] = 0x21;
-		stmheader[21] = 0x53;
-		stmheader[22] = 0x63;
-		stmheader[23] = 0x72;
-		stmheader[24] = 0x65;
-		stmheader[25] = 0x61;
-		stmheader[26] = 0x6D;
-		stmheader[27] = 0x21;
+		stmHeader[20] = 0x21;
+		stmHeader[21] = 0x53;
+		stmHeader[22] = 0x63;
+		stmHeader[23] = 0x72;
+		stmHeader[24] = 0x65;
+		stmHeader[25] = 0x61;
+		stmHeader[26] = 0x6D;
+		stmHeader[27] = 0x21;
 
 		/* DOS EoF */
-		stmheader[28] = 0x1A;
+		stmHeader[28] = 0x1A;
 
 		/* Module */
-		stmheader[29] = 0x02;
+		stmHeader[29] = 0x02;
 
 		/* Scream Tracker 2.21 */
-		stmheader[30] = 0x02;
-		stmheader[31] = 0x15;
+		stmHeader[30] = 0x02;
+		stmHeader[31] = 0x15;
 
 		/* Initital tempo */
-		stmheader[32] = (s3mheader[49] << 4) + ((s3mheader[50] / 125) & 0x0F);
+		stmHeader[32] = (s3mHeader[49] << 4) + ((s3mHeader[50] / 125) & 0x0F);
 
 		/* Number of patterns */
-		stmheader[33] = s3mheader[36];
+		stmHeader[33] = s3mHeader[36];
 
 		/* Global volume */
-		stmheader[34] = s3mheader[48];
-		
-		/* printf("%X", ftell(ins3m)); */
+		stmHeader[34] = s3mHeader[48];
 
-		orderarray = (char*)calloc(255, sizeof(char));
-		if (orderarray == NULL) {
+		orderArray = (char*)calloc(255, sizeof(char));
+		if (orderArray == NULL) {
 			puts("Failed to allocate memory for the STM header.");
 			return 2;
 		}
 		
-		fread(orderarray, sizeof(char), orderlen, ins3m);
+		fread(orderArray, sizeof(char), orderLen, inS3M);
 
-		for (; o < orderlen; ++o) {
-			if ((unsigned char)orderarray[o] < 254) {
-				orderarray[l] = orderarray[o];
+		for (o = 0; o < orderLen; ++o) {
+			if ((unsigned char)orderArray[o] < 254) {
+				orderArray[l] = orderArray[o];
 				++l;
-				if ((unsigned char)orderarray[o] > numofpats)
-					numofpats = (unsigned char)orderarray[o];
+				if ((unsigned char)orderArray[o] > numofPats)
+					numofPats = (unsigned char)orderArray[o];
 			}
 		}
 
 		printf("Orders (excluding pattern markers) found: %u\n", l);
 
-		fwrite(stmheader, 1040, sizeof(char), outstm);
+		fwrite(stmHeader, 1040, sizeof(char), outSTM);
 
-		free(stmheader);
-		free(s3mheader);
-		free(orderarray);
+		free(stmHeader);
+		free(s3mHeader);
+		free(orderArray);
 
-		fclose(ins3m);
-		fclose(outstm);
+		fclose(inS3M);
+		fclose(outSTM);
 		return 0;
 	} else if( argc > 3 ) {
 		puts("Too many arguments.");
