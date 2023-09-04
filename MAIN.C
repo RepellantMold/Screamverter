@@ -15,7 +15,7 @@
  * 1: Too many/not enough arguments
  * 2: Failed to allocate memory
  */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,15 +25,17 @@ int main(int argc, char *argv[]) {
 	/* I'm only able to write in bytes at a time,
 	and I have to dynamically allocate memory! */
 	char *s3mHeader;
-	char *s3minstheader;
+	unsigned char s3minstheader[80];
+	unsigned char stminstheader[32*31];
 	char *stmHeader;
 	char *s3mPat;
 	char *stmPat;
 	char *orderArray;
-	char *patptrArray;
-	char *instptrArray;
+	short *patptrArray;
+	short *instptrArray;
+	int *parapointer;
 
-	unsigned char p, r, c, s, o, l = 0;
+	register unsigned char p, r, c, s, o, l = 0;
 
 	unsigned char ordCnt;
 	unsigned char patCnt;
@@ -64,7 +66,7 @@ int main(int argc, char *argv[]) {
 			return 2;
 		}
 
-		fread(s3mHeader, 96, 1, inS3M);
+		fread(s3mHeader, sizeof(char), 96, inS3M);
 
 		puts("Converting header...");
 
@@ -118,18 +120,41 @@ int main(int argc, char *argv[]) {
 		stmHeader[32] = (s3mHeader[49] << 4) + ((s3mHeader[50] / 125) & 0x0F);
 
 		/* Number of patterns */
-		stmHeader[33] = s3mHeader[36];
+		stmHeader[33] = patCnt;
 
 		/* Global volume */
 		stmHeader[34] = s3mHeader[48];
 
-		orderArray = (char*)calloc(255, sizeof(char));
+		orderArray = (char*)calloc(ordCnt, sizeof(char));
 		if (orderArray == NULL) {
-			puts("Failed to allocate memory for the STM header.");
+			puts("Failed to allocate memory.");
+			return 2;
+		}
+
+		instptrArray = (short*)calloc(insCnt, sizeof(short));
+		if (instptrArray == NULL) {
+			puts("Failed to allocate memory.");
+			return 2;
+		}
+
+		patptrArray = (short*)calloc(patCnt, sizeof(short));
+		if (patptrArray == NULL) {
+			puts("Failed to allocate memory.");
 			return 2;
 		}
 		
 		fread(orderArray, sizeof(char), ordCnt, inS3M);
+		fread(instptrArray, sizeof(short), insCnt, inS3M);
+
+		for (s = 0; s < insCnt; ++s) {
+			instptrArray[p * 2] <<= 4;
+		}
+
+		fread(patptrArray, sizeof(short), patCnt, inS3M);
+
+		for (p = 0; p < patCnt; ++p) {
+			patptrArray[p * 2] <<= 4;
+		}
 
 		/* Scream Tracker 2 uses 99 to denote no pattern (I think) */
 		for (o = 0; o < 128; ++o) {
@@ -144,6 +169,92 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
+		/*
+
+		for (s = 0; s < 31; ++s) {
+			if (s < insCnt) {
+				fseek(inS3M, instptrArray[s], SEEK_SET);
+				fread(s3minstheader, sizeof(char), 80, inS3M);
+
+				stminstheader[0 * s] = s3minstheader[1];
+				stminstheader[1 * s] = s3minstheader[2];
+				stminstheader[2 * s] = s3minstheader[3];
+				stminstheader[3 * s] = s3minstheader[4];
+				stminstheader[4 * s] = s3minstheader[5];
+				stminstheader[5 * s] = s3minstheader[6];
+				stminstheader[6 * s] = s3minstheader[7];
+				stminstheader[7 * s] = s3minstheader[8];
+				stminstheader[8 * s] = s3minstheader[9];
+				stminstheader[9 * s] = s3minstheader[10];
+				stminstheader[10 * s] = s3minstheader[11];
+				stminstheader[11 * s] = s3minstheader[12];
+				stminstheader[12 * s] = 0;
+				stminstheader[13 * s] = 0;
+				stminstheader[14 * s] = 0;
+				stminstheader[15 * s] = 0;
+				stminstheader[16 * s] = s3minstheader[16];
+				stminstheader[17 * s] = s3minstheader[17];
+				if (s3minstheader[31] & 1) {
+					stminstheader[18 * s] = s3minstheader[20];
+					stminstheader[19 * s] = s3minstheader[21];
+					stminstheader[20 * s] = s3minstheader[24];
+					stminstheader[21 * s] = s3minstheader[25];
+				} else {
+					stminstheader[18 * s] = 0;
+					stminstheader[19 * s] = 0;
+					stminstheader[20 * s] = 0xFF;
+					stminstheader[21 * s] = 0xFF;
+				}
+				stminstheader[22 * s] = s3minstheader[28];
+				stminstheader[23 * s] = 0;
+				stminstheader[24 * s] = s3minstheader[32];
+				stminstheader[25 * s] = s3minstheader[33];
+				stminstheader[26 * s] = 0;
+				stminstheader[27 * s] = 0;
+				stminstheader[28 * s] = 0;
+				stminstheader[29 * s] = 0;
+				stminstheader[30 * s] = 0;
+				stminstheader[31 * s] = 0;
+			} else {
+				stminstheader[0 * s] = 0;
+				stminstheader[1 * s] = 0;
+				stminstheader[2 * s] = 0;
+				stminstheader[3 * s] = 0;
+				stminstheader[4 * s] = 0;
+				stminstheader[5 * s] = 0;
+				stminstheader[6 * s] = 0;
+				stminstheader[7 * s] = 0;
+				stminstheader[8 * s] = 0;
+				stminstheader[9 * s] = 0;
+				stminstheader[10 * s] = 0;
+				stminstheader[11 * s] = 0;
+				stminstheader[12 * s] = 0;
+				stminstheader[13 * s] = 0;
+				stminstheader[14 * s] = 0;
+				stminstheader[15 * s] = 0;
+				stminstheader[16 * s] = 0;
+				stminstheader[17 * s] = 0;	
+				stminstheader[18 * s] = 0;
+				stminstheader[19 * s] = 0;
+				stminstheader[20 * s] = 0xFF;
+				stminstheader[21 * s] = 0xFF;
+				stminstheader[22 * s] = 0;
+				stminstheader[23 * s] = 0;
+				stminstheader[24 * s] = 0;
+				stminstheader[25 * s] = 0;
+				stminstheader[26 * s] = 0;
+				stminstheader[27 * s] = 0;
+				stminstheader[28 * s] = 0;
+				stminstheader[29 * s] = 0;
+				stminstheader[30 * s] = 0;
+				stminstheader[31 * s] = 0;
+			}
+		}
+
+		memcpy(&stmHeader[48], stminstheader, (sizeof(char) * 32) * 31);
+
+		*/
+
 		printf("Orders (excluding pattern markers) found: %u\n", l);
 
 		fwrite(stmHeader, 1040, sizeof(char), outSTM);
@@ -151,6 +262,8 @@ int main(int argc, char *argv[]) {
 		free(stmHeader);
 		free(s3mHeader);
 		free(orderArray);
+		free(patptrArray);
+		free(instptrArray);
 
 		fclose(inS3M);
 		fclose(outSTM);
