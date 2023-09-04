@@ -1,19 +1,19 @@
 PROJ	=SCREAM
-DEBUG	=1
+DEBUG	=0
 CC	=qcl
 AS	=qcl
-CFLAGS_G	= /AT /W1 /Za 
+CFLAGS_G	= /AL /W1 /Za 
 CFLAGS_D	= /Zi /Zr /Od 
-CFLAGS_R	= /O /Ol /Gs /DNDEBUG 
-CFLAGS	=$(CFLAGS_G) $(CFLAGS_D)
+CFLAGS_R	= /O /Ot /Gs /Os /DNDEBUG 
+CFLAGS	=$(CFLAGS_G) $(CFLAGS_R)
 AFLAGS_G	= /Cx /W1 /P2 
 AFLAGS_D	= /Zi /l /Sa /Sd 
 AFLAGS_R	= /DNDEBUG 
-AFLAGS	=$(AFLAGS_G) $(AFLAGS_D)
+AFLAGS	=$(AFLAGS_G) $(AFLAGS_R)
 LFLAGS_G	= /CP:0xfff /NOE /SE:0x80 /ST:0x800 
 LFLAGS_D	= /CO 
 LFLAGS_R	= 
-LFLAGS	=$(LFLAGS_G) $(LFLAGS_D)
+LFLAGS	=$(LFLAGS_G) $(LFLAGS_R)
 RUNFLAGS	=test.s3m test.stm
 OBJS_EXT = 	
 LIBS_EXT = 	
@@ -32,7 +32,7 @@ $(PROJ).EXE
 
 $(LIBS_EXT);
 <<
-	ilink -a -e "qlink $(LFLAGS) @$(PROJ).crf" $(PROJ)
+	qlink $(LFLAGS) @$(PROJ).crf
 
 run: $(PROJ).EXE
 	$(PROJ) $(RUNFLAGS)

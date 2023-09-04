@@ -35,13 +35,9 @@ int main(int argc, char *argv[]) {
 
 	unsigned char p, r, c, s, o, l = 0;
 
-	unsigned char orderLen;
-	unsigned char numofPats;
-	unsigned char numofinsts;
-
 	unsigned char ordCnt;
-	unsigned char insCnt;
 	unsigned char patCnt;
+	unsigned char insCnt;
 
 	unsigned short trackerInfo = 0;
 	
@@ -81,13 +77,8 @@ int main(int argc, char *argv[]) {
 		insCnt = s3mHeader[34];
 		patCnt = s3mHeader[36];
 
-		/* Little endian things... */
-		trackerInfo = ((s3mHeader[41] << 8) + s3mHeader[40]);
-
-		printf("Tracker info: %04X\n", trackerInfo);
-
-		orderLen = s3mHeader[32];
-		numofPats = s3mHeader[36];
+		/* Null terminated string */
+		printf("Song title: %.28s\n", s3mHeader);
 
 		stmHeader = (char*)calloc(1040, sizeof(char));
 		if (stmHeader == NULL) {
@@ -138,14 +129,18 @@ int main(int argc, char *argv[]) {
 			return 2;
 		}
 		
-		fread(orderArray, sizeof(char), orderLen, inS3M);
+		fread(orderArray, sizeof(char), ordCnt, inS3M);
 
-		for (o = 0; o < orderLen; ++o) {
+		/* Scream Tracker 2 uses 99 to denote no pattern (I think) */
+		for (o = 0; o < 128; ++o) {
+			orderArray[o] = 99;
+		}
+
+		for (o = 0; o < ordCnt; ++o) {
 			if ((unsigned char)orderArray[o] < 254) {
 				orderArray[l] = orderArray[o];
 				++l;
-				if ((unsigned char)orderArray[o] > numofPats)
-					numofPats = (unsigned char)orderArray[o];
+				stmHeader[976 + l] = orderArray[l];
 			}
 		}
 
