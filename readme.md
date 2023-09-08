@@ -1,11 +1,13 @@
 # Screamverter
 
-Scream Tracker 3 module to Scream Tracker 2 module converter
+Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
 
 ## Building
 
 It should be as simple as running your favorite compiler on `main.c`
 You can also run "nmake scream.mak" if you run Microsoft Quick C for MS-DOS.
+
+I also use one submodule (clowncommon by Clownacy)[https://github.com/Clownacy/clowncommon], so make sure to clone this repo with `--recurse`!
 
 ## Requirements
 

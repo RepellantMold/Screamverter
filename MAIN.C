@@ -14,6 +14,14 @@
 #include <string.h>
 
 #include "MAIN.H"
+#include "clowncommon/clowncommon.h"
+
+unsigned int xorshift32(unsigned int state) {
+	state ^= state << 13;
+	state ^= state >> 17;
+	state ^= state << 5;
+	return state;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -28,7 +36,7 @@ int main(int argc, char *argv[]) {
 	unsigned short instptrArray[99];
 	unsigned int parapointer;
 
-	unsigned char p, r, c, s, o, l = 0;
+	unsigned char p, r, c, s, o, l, n = 0;
 
 	unsigned char ordCnt;
 	unsigned char patCnt;
@@ -88,6 +96,8 @@ int main(int argc, char *argv[]) {
 		stmSongHeader[34] = s3mHeader[48];
 
 		fwrite(stmSongHeader, sizeof(char), sizeof(stmSongHeader), outSTM);
+
+		free(s3mHeader);
 
 		orderArray = (char*)calloc(ordCnt, sizeof(char));
 		if (orderArray == NULL) {
@@ -150,6 +160,10 @@ int main(int argc, char *argv[]) {
 				stmSampHeader[22] = s3minstheader[28];
 			} else {
 				/* default stuff */
+				
+				for (n = 0; n < 12; ++n) {
+					stmSampHeader[n] = CC_CLAMP(0x20, 0x7E, xorshift32(1337));
+				}
 
 				/* sample length */
 				stmSampHeader[16] = 0;
@@ -180,12 +194,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
+		free(orderArray);
+
 		printf("Orders (excluding pattern markers) found: %u\n", l);
 
 		fwrite(stmOrdTable, sizeof(char), sizeof(stmOrdTable), outSTM);
-
-		free(s3mHeader);
-		free(orderArray);
 
 		for(p = 0; p < patCnt; ++p) {
 			fseek(inS3M, patptrArray[p], SEEK_SET);
