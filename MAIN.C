@@ -32,16 +32,26 @@ int main(int argc, char *argv[]) {
 	char *s3mPat;
 	char *stmPat;
 	char *orderArray;
+
+	/* I can't use dynamic allocation easily (mainly due to it defaulting to being signed...damn x86..) */
 	unsigned short patptrArray[255];
 	unsigned short instptrArray[99];
-	unsigned int parapointer;
+	unsigned short instdatptrArray[99];
 
-	unsigned char p, r, c, s, o, l, n = 0;
+	/* pattern, row, channel, sample, order, length, name */
+	unsigned char p = 0, r = 0, c = 0, s = 0, o = 0, l = 0, n = 0;
 
-	unsigned char ordCnt;
-	unsigned char patCnt;
-	unsigned char insCnt;
+	/* for sample conversion */
+	unsigned int parapointer = 0;
+	unsigned int crc = 0;
 
+	/* counters */
+	unsigned char ordCnt = 0;
+	unsigned char patCnt = 0;
+	unsigned char insCnt = 0;
+
+	/* for pattern conversion */
+	unsigned char cv = 0;
 	unsigned short patSize = 0;
 
 	puts("Screamverter\nby RepellantMold (2023)");
@@ -120,19 +130,40 @@ int main(int argc, char *argv[]) {
 			patptrArray[p] <<= 4;
 		}
 
+		if (insCnt > 31) puts("WARNING: more than 31 samples found!");
+
 		/* Copy over the sample data */
 		for (s = 0; s < 31; ++s) {
-
 			if (s < insCnt) {
 				fseek(inS3M, instptrArray[s], SEEK_SET);
 				/* printf("%X - %lX\n", instptrArray[s], ftell(inS3M)); */
 				fread(s3minstheader, sizeof(char), 80, inS3M);
 
-				/* file name */
-				memcpy(stmSampHeader, &s3minstheader[1], 12);
+				/* this will be saved for later for when sample data itself has to be converted */
+				parapointer = (s3minstheader[13] << 16) + (s3minstheader[15] << 8) + s3minstheader[14];
+
+				/* turn the parapointers into regular pointers */
+				instdatptrArray[s] = parapointer << 4;
+
+				/* if the file name is not blank in the instrument */
+				if (s3minstheader[1]) {
+					/* file name */
+					memcpy(stmSampHeader, &s3minstheader[1], 12);
+				} else {
+					memcpy(stmSampHeader, &s3minstheader[48], 8);
+					stmSampHeader[9] = '.';
+					stmSampHeader[10] = 'S';
+					stmSampHeader[11] = 'M';
+					stmSampHeader[12] = 'P';
+				}
 				
 				/* if the loop flag is set... */
 				if (s3minstheader[31] & 1) {
+					if (s3minstheader[22] || s3minstheader[23])
+						puts("WARNING: start of loop length is too long, it will be truncated!");
+					else if (s3minstheader[26] || s3minstheader[27])
+						puts("WARNING: end of loop length is too long, it will be truncated!");
+
 					/* loop start and loop end */
 					stmSampHeader[18] = s3minstheader[20];
 					stmSampHeader[19] = s3minstheader[21];
@@ -147,6 +178,9 @@ int main(int argc, char *argv[]) {
 				}
 				
 				/* sample length */
+				if (s3minstheader[18] || s3minstheader[19])
+					puts("WARNING: Sample length is too long, it will be truncated!");
+
 				stmSampHeader[16] = s3minstheader[16];
 				stmSampHeader[17] = s3minstheader[17];
 			
@@ -154,15 +188,17 @@ int main(int argc, char *argv[]) {
 				stmSampHeader[22] = s3minstheader[28];
 				
 				/* c2 speed */
+				if (s3minstheader[34] || s3minstheader[35])
+					puts("WARNING: C2 speed is too high, it will be truncated!");
 				stmSampHeader[24] = s3minstheader[32];
 				stmSampHeader[25] = s3minstheader[33];
 
 				stmSampHeader[22] = s3minstheader[28];
 			} else {
-				/* default stuff */
+				/* default stuff if there's no other samples */
 				
 				for (n = 0; n < 12; ++n) {
-					stmSampHeader[n] = CC_CLAMP(0x20, 0x7E, xorshift32(1337));
+					stmSampHeader[n] = 0;
 				}
 
 				/* sample length */
@@ -209,6 +245,8 @@ int main(int argc, char *argv[]) {
 				puts("Failed to allocate memory!");
 				return 2;
 			}
+
+			
 
 			free(s3mPat);
 		}
