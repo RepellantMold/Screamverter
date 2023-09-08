@@ -1,0 +1,63 @@
+unsigned char stmSongHeader[48] = {
+
+	/* song title (ASCIIZ) */
+	'S', 'r', 'e', 'a', 'm', 'v', 'e', 'r', 't', 'e', 'r', 'i', 'o', 'n', 0, 0,
+	0, 0, 0, 0,
+	/* magic */
+	'!', 'S', 'c', 'r', 'e', 'a', 'm', '!',
+	/* DOS EoF */
+	0x1A,
+	/* file type */
+	0x02,
+	/* Major/minor version */
+	0x02, 0x15,
+	/* intial tempo */
+	0x60,
+	/* number of patterns */
+	0x00,
+	/* global volume */
+	0x40,
+	/* more magic (identification for converter) */
+	'r', 'e', 'p', 'e', 'l', 'l', 'a', 'n', 't', 'm', 'o', 'l', 'd'
+
+};
+
+unsigned char stmSampHeader[64] = {
+
+	/* sample title (ASCIIZ) */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* another 0 */
+	0,
+	/* instrument disk */
+	0,
+	/* internal segment */
+	0, 0,
+	/* sample length */
+	0, 0,
+	/* loop start */
+	0, 0,
+	/* loop end */
+	0xFF, 0xFF,
+	/* default volume */
+	64,
+	/* reserved */
+	0,
+	/* c2 speed */
+	81, 92,
+	/* reserved */
+	0, 0, 0, 0,
+	/* segment (12-bit pointer) */
+	0, 0
+
+};
+
+unsigned char stmOrdTable[128] = {
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+};

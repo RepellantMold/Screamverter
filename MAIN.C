@@ -2,23 +2,17 @@
  * Screamverter by RepellantMold (2023)
  * This code is licensed under MIT-0.
 
- * I made sure to test this with a multitude of compilers I have available.
-
- * Compiled on:
- * Bloodshed's Dev-C++ 5.11 (TDM-GCC 4.9.2) (in a Windows XP virtual machine),
- * Microsoft Quick C (MS-DOS via DOSBox-X),
- * Tiny C Compiler (Windows 11 64-bit),
- * TDM-GCC 10.3.0 (Windows 11 64-bit)
-
  * Return values:
  * 0: Success
  * 1: Too many/not enough arguments
  * 2: Failed to allocate memory
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "MAIN.H"
 
 int main(int argc, char *argv[]) {
 
@@ -26,7 +20,6 @@ int main(int argc, char *argv[]) {
 	and I have to dynamically allocate memory! */
 	char *s3mHeader;
 	unsigned char s3minstheader[80];
-	unsigned char stminstheader[32*31];
 	char *stmHeader;
 	char *s3mPat;
 	char *stmPat;
@@ -35,14 +28,12 @@ int main(int argc, char *argv[]) {
 	short *instptrArray;
 	int *parapointer;
 
-	register unsigned char p, r, c, s, o, l = 0;
+	unsigned char p, r, c, s, o, l = 0;
 
 	unsigned char ordCnt;
 	unsigned char patCnt;
 	unsigned char insCnt;
 
-	unsigned short trackerInfo = 0;
-	
 	puts("Screamverter\nby RepellantMold (2023)");
 
 	if( argc == 3 ) {
@@ -82,48 +73,17 @@ int main(int argc, char *argv[]) {
 		/* Null terminated string */
 		printf("Song title: %.28s\n", s3mHeader);
 
-		stmHeader = (char*)calloc(1040, sizeof(char));
-		if (stmHeader == NULL) {
-			puts("Failed to allocate memory!");
-			return 2;
-		}
-
 		/* Copy over the title string */
-		memcpy(stmHeader, s3mHeader, 20);
-
-		/* add a terminator if needed */
-		if (stmHeader[19] != 0) {
-			stmHeader[19] = 0;
-		}
-
-		/* "!Scream!" */
-		stmHeader[20] = 0x21;
-		stmHeader[21] = 0x53;
-		stmHeader[22] = 0x63;
-		stmHeader[23] = 0x72;
-		stmHeader[24] = 0x65;
-		stmHeader[25] = 0x61;
-		stmHeader[26] = 0x6D;
-		stmHeader[27] = 0x21;
-
-		/* DOS EoF */
-		stmHeader[28] = 0x1A;
-
-		/* Module */
-		stmHeader[29] = 0x02;
-
-		/* Scream Tracker 2.21 */
-		stmHeader[30] = 0x02;
-		stmHeader[31] = 0x15;
+		memcpy(stmSongHeader, s3mHeader, 19);
 
 		/* Initital tempo */
-		stmHeader[32] = (s3mHeader[49] << 4) + ((s3mHeader[50] / 125) & 0x0F);
+		stmSongHeader[32] = (s3mHeader[49] << 4) + ((s3mHeader[50] / 125) & 0x0F);
 
 		/* Number of patterns */
-		stmHeader[33] = patCnt;
+		stmSongHeader[33] = patCnt;
 
 		/* Global volume */
-		stmHeader[34] = s3mHeader[48];
+		stmSongHeader[34] = s3mHeader[48];
 
 		orderArray = (char*)calloc(ordCnt, sizeof(char));
 		if (orderArray == NULL) {
@@ -147,18 +107,13 @@ int main(int argc, char *argv[]) {
 		fread(instptrArray, sizeof(short), insCnt, inS3M);
 
 		for (s = 0; s < insCnt; ++s) {
-			instptrArray[p * 2] <<= 4;
+			instptrArray[s * 2] <<= 4;
 		}
 
 		fread(patptrArray, sizeof(short), patCnt, inS3M);
 
 		for (p = 0; p < patCnt; ++p) {
-			patptrArray[p * 2] <<= 4;
-		}
-
-		/* Scream Tracker 2 uses 99 to denote no pattern (I think) */
-		for (o = 0; o < 128; ++o) {
-			orderArray[o] = 99;
+			patptrArray[s * 2] <<= 4;
 		}
 
 		for (o = 0; o < ordCnt; ++o) {
@@ -169,97 +124,60 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		/*
-
+		/* Copy over the sample data */
 		for (s = 0; s < 31; ++s) {
+
 			if (s < insCnt) {
 				fseek(inS3M, instptrArray[s], SEEK_SET);
 				fread(s3minstheader, sizeof(char), 80, inS3M);
-
-				stminstheader[0 * s] = s3minstheader[1];
-				stminstheader[1 * s] = s3minstheader[2];
-				stminstheader[2 * s] = s3minstheader[3];
-				stminstheader[3 * s] = s3minstheader[4];
-				stminstheader[4 * s] = s3minstheader[5];
-				stminstheader[5 * s] = s3minstheader[6];
-				stminstheader[6 * s] = s3minstheader[7];
-				stminstheader[7 * s] = s3minstheader[8];
-				stminstheader[8 * s] = s3minstheader[9];
-				stminstheader[9 * s] = s3minstheader[10];
-				stminstheader[10 * s] = s3minstheader[11];
-				stminstheader[11 * s] = s3minstheader[12];
-				stminstheader[12 * s] = 0;
-				stminstheader[13 * s] = 0;
-				stminstheader[14 * s] = 0;
-				stminstheader[15 * s] = 0;
-				stminstheader[16 * s] = s3minstheader[16];
-				stminstheader[17 * s] = s3minstheader[17];
+				
+				/* loop start and loop end */
 				if (s3minstheader[31] & 1) {
-					stminstheader[18 * s] = s3minstheader[20];
-					stminstheader[19 * s] = s3minstheader[21];
-					stminstheader[20 * s] = s3minstheader[24];
-					stminstheader[21 * s] = s3minstheader[25];
+					stmSampHeader[18] = s3minstheader[20];
+					stmSampHeader[19] = s3minstheader[21];
+					stmSampHeader[20] = s3minstheader[24];
+					stmSampHeader[21] = s3minstheader[25];
 				} else {
-					stminstheader[18 * s] = 0;
-					stminstheader[19 * s] = 0;
-					stminstheader[20 * s] = 0xFF;
-					stminstheader[21 * s] = 0xFF;
+					stmSampHeader[18] = 0;
+					stmSampHeader[19] = 0;
+					stmSampHeader[20] = 0xFF;
+					stmSampHeader[21] = 0xFF;
 				}
-				stminstheader[22 * s] = s3minstheader[28];
-				stminstheader[23 * s] = 0;
-				stminstheader[24 * s] = s3minstheader[32];
-				stminstheader[25 * s] = s3minstheader[33];
-				stminstheader[26 * s] = 0;
-				stminstheader[27 * s] = 0;
-				stminstheader[28 * s] = 0;
-				stminstheader[29 * s] = 0;
-				stminstheader[30 * s] = 0;
-				stminstheader[31 * s] = 0;
+				
+				/* sample length */
+				stmSampHeader[16] = s3minstheader[16];
+				stmSampHeader[17] = s3minstheader[17];
+			
+				/* default volume */
+				stmSampHeader[22] = s3minstheader[28];
+				
+				/* c2 speed */
+				stmSampHeader[24] = s3minstheader[32];
+				stmSampHeader[25] = s3minstheader[33];
+
+				stmSampHeader[22] = s3minstheader[28];
 			} else {
-				stminstheader[0 * s] = 0;
-				stminstheader[1 * s] = 0;
-				stminstheader[2 * s] = 0;
-				stminstheader[3 * s] = 0;
-				stminstheader[4 * s] = 0;
-				stminstheader[5 * s] = 0;
-				stminstheader[6 * s] = 0;
-				stminstheader[7 * s] = 0;
-				stminstheader[8 * s] = 0;
-				stminstheader[9 * s] = 0;
-				stminstheader[10 * s] = 0;
-				stminstheader[11 * s] = 0;
-				stminstheader[12 * s] = 0;
-				stminstheader[13 * s] = 0;
-				stminstheader[14 * s] = 0;
-				stminstheader[15 * s] = 0;
-				stminstheader[16 * s] = 0;
-				stminstheader[17 * s] = 0;	
-				stminstheader[18 * s] = 0;
-				stminstheader[19 * s] = 0;
-				stminstheader[20 * s] = 0xFF;
-				stminstheader[21 * s] = 0xFF;
-				stminstheader[22 * s] = 0;
-				stminstheader[23 * s] = 0;
-				stminstheader[24 * s] = 0;
-				stminstheader[25 * s] = 0;
-				stminstheader[26 * s] = 0;
-				stminstheader[27 * s] = 0;
-				stminstheader[28 * s] = 0;
-				stminstheader[29 * s] = 0;
-				stminstheader[30 * s] = 0;
-				stminstheader[31 * s] = 0;
-			}
+				/* default stuff */
+				stmSampHeader[16] = 0;
+				stmSampHeader[17] = 0;
+				stmSampHeader[18] = 0;
+				stmSampHeader[19] = 0;
+				stmSampHeader[20] = 0xFF;
+				stmSampHeader[21] = 0xFF;
+				stmSampHeader[22] = 0;
+			} 
+
+			memcpy(stmSampHeader, &s3minstheader[1], 12);
+			
+
+			memcpy(&stmHeader[48 + (s * sizeof(stmSampHeader))], stmSampHeader, sizeof(stmSampHeader));
 		}
 
-		memcpy(&stmHeader[48], stminstheader, (sizeof(char) * 32) * 31);
-
-		*/
 
 		printf("Orders (excluding pattern markers) found: %u\n", l);
 
-		fwrite(stmHeader, 1040, sizeof(char), outSTM);
+		fwrite(stmHeader, sizeof(char), 1040, outSTM);
 
-		free(stmHeader);
 		free(s3mHeader);
 		free(orderArray);
 		free(patptrArray);
