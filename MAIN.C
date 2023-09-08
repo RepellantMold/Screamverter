@@ -34,6 +34,8 @@ int main(int argc, char *argv[]) {
 	unsigned char patCnt;
 	unsigned char insCnt;
 
+	unsigned short patSize = 0;
+
 	puts("Screamverter\nby RepellantMold (2023)");
 
 	if( argc == 3 ) {
@@ -97,12 +99,14 @@ int main(int argc, char *argv[]) {
 		fread(instptrArray, sizeof(short), insCnt, inS3M);
 
 		for (s = 0; s < insCnt; ++s) {
+			/* turn the parapointers into regular pointers */
 			instptrArray[s] <<= 4;
 		}
 
 		fread(patptrArray, sizeof(short), patCnt, inS3M);
 
 		for (p = 0; p < patCnt; ++p) {
+			/* turn the parapointers into regular pointers */
 			patptrArray[p] <<= 4;
 		}
 
@@ -111,19 +115,21 @@ int main(int argc, char *argv[]) {
 
 			if (s < insCnt) {
 				fseek(inS3M, instptrArray[s], SEEK_SET);
-				printf("%X - %lX\n", instptrArray[s], ftell(inS3M));
+				/* printf("%X - %lX\n", instptrArray[s], ftell(inS3M)); */
 				fread(s3minstheader, sizeof(char), 80, inS3M);
 
 				/* file name */
 				memcpy(stmSampHeader, &s3minstheader[1], 12);
 				
-				/* loop start and loop end */
+				/* if the loop flag is set... */
 				if (s3minstheader[31] & 1) {
+					/* loop start and loop end */
 					stmSampHeader[18] = s3minstheader[20];
 					stmSampHeader[19] = s3minstheader[21];
 					stmSampHeader[20] = s3minstheader[24];
 					stmSampHeader[21] = s3minstheader[25];
 				} else {
+					/* no loop */
 					stmSampHeader[18] = 0;
 					stmSampHeader[19] = 0;
 					stmSampHeader[20] = 0xFF;
@@ -144,13 +150,23 @@ int main(int argc, char *argv[]) {
 				stmSampHeader[22] = s3minstheader[28];
 			} else {
 				/* default stuff */
+
+				/* sample length */
 				stmSampHeader[16] = 0;
 				stmSampHeader[17] = 0;
+
+				/* loop start and loop end */
 				stmSampHeader[18] = 0;
 				stmSampHeader[19] = 0;
 				stmSampHeader[20] = 0xFF;
 				stmSampHeader[21] = 0xFF;
+
+				/* default volume */
 				stmSampHeader[22] = 0;
+
+				/* c2 speed */
+				stmSampHeader[24] = 81;
+				stmSampHeader[25] = 92;
 			} 
 
 			fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), outSTM);
@@ -158,6 +174,7 @@ int main(int argc, char *argv[]) {
 
 		for (o = 0; o < ordCnt; ++o) {
 			if ((unsigned char)orderArray[o] < 254) {
+				/* Copy over the order data if there's no markers */
 				stmOrdTable[l] = orderArray[o];
 				++l;
 			}
@@ -169,6 +186,19 @@ int main(int argc, char *argv[]) {
 
 		free(s3mHeader);
 		free(orderArray);
+
+		for(p = 0; p < patCnt; ++p) {
+			fseek(inS3M, patptrArray[p], SEEK_SET);
+			fread(&patSize, sizeof(char), 2, inS3M);
+
+			s3mPat = (char*)calloc(patSize, sizeof(char));
+			if (s3mPat == NULL) {
+				puts("Failed to allocate memory!");
+				return 2;
+			}
+
+			free(s3mPat);
+		}
 
 		fclose(inS3M);
 		fclose(outSTM);
