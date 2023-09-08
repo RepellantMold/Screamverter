@@ -5,7 +5,8 @@
  * Return values:
  * 0: Success
  * 1: Too many/not enough arguments
- * 2: Failed to allocate memory
+ * 2: Memory allocation error
+ * -1: Invalid S3M file
  */
 
 #include <stdio.h>
@@ -20,13 +21,12 @@ int main(int argc, char *argv[]) {
 	and I have to dynamically allocate memory! */
 	char *s3mHeader;
 	unsigned char s3minstheader[80];
-	char *stmHeader;
 	char *s3mPat;
 	char *stmPat;
 	char *orderArray;
-	short *patptrArray;
-	short *instptrArray;
-	int *parapointer;
+	unsigned short patptrArray[255];
+	unsigned short instptrArray[99];
+	unsigned int parapointer;
 
 	unsigned char p, r, c, s, o, l = 0;
 
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 
 		if (s3mHeader[44] != 'S' || s3mHeader[45] != 'C' || s3mHeader[46] != 'R' || s3mHeader[47] != 'M') {
 			puts("Not a valid S3M file.");
-			return 2;
+			return -1;
 		}
 
 		ordCnt = s3mHeader[32];
@@ -85,20 +85,10 @@ int main(int argc, char *argv[]) {
 		/* Global volume */
 		stmSongHeader[34] = s3mHeader[48];
 
+		fwrite(stmSongHeader, sizeof(char), sizeof(stmSongHeader), outSTM);
+
 		orderArray = (char*)calloc(ordCnt, sizeof(char));
 		if (orderArray == NULL) {
-			puts("Failed to allocate memory.");
-			return 2;
-		}
-
-		instptrArray = (short*)calloc(insCnt, sizeof(short));
-		if (instptrArray == NULL) {
-			puts("Failed to allocate memory.");
-			return 2;
-		}
-
-		patptrArray = (short*)calloc(patCnt, sizeof(short));
-		if (patptrArray == NULL) {
 			puts("Failed to allocate memory.");
 			return 2;
 		}
@@ -107,21 +97,13 @@ int main(int argc, char *argv[]) {
 		fread(instptrArray, sizeof(short), insCnt, inS3M);
 
 		for (s = 0; s < insCnt; ++s) {
-			instptrArray[s * 2] <<= 4;
+			instptrArray[s] <<= 4;
 		}
 
 		fread(patptrArray, sizeof(short), patCnt, inS3M);
 
 		for (p = 0; p < patCnt; ++p) {
-			patptrArray[s * 2] <<= 4;
-		}
-
-		for (o = 0; o < ordCnt; ++o) {
-			if ((unsigned char)orderArray[o] < 254) {
-				orderArray[l] = orderArray[o];
-				++l;
-				stmHeader[976 + l] = orderArray[l];
-			}
+			patptrArray[p] <<= 4;
 		}
 
 		/* Copy over the sample data */
@@ -129,7 +111,11 @@ int main(int argc, char *argv[]) {
 
 			if (s < insCnt) {
 				fseek(inS3M, instptrArray[s], SEEK_SET);
+				printf("%X - %lX\n", instptrArray[s], ftell(inS3M));
 				fread(s3minstheader, sizeof(char), 80, inS3M);
+
+				/* file name */
+				memcpy(stmSampHeader, &s3minstheader[1], 12);
 				
 				/* loop start and loop end */
 				if (s3minstheader[31] & 1) {
@@ -167,24 +153,27 @@ int main(int argc, char *argv[]) {
 				stmSampHeader[22] = 0;
 			} 
 
-			memcpy(stmSampHeader, &s3minstheader[1], 12);
-			
-
-			memcpy(&stmHeader[48 + (s * sizeof(stmSampHeader))], stmSampHeader, sizeof(stmSampHeader));
+			fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), outSTM);
 		}
 
+		for (o = 0; o < ordCnt; ++o) {
+			if ((unsigned char)orderArray[o] < 254) {
+				stmOrdTable[l] = orderArray[o];
+				++l;
+			}
+		}
 
 		printf("Orders (excluding pattern markers) found: %u\n", l);
 
-		fwrite(stmHeader, sizeof(char), 1040, outSTM);
+		fwrite(stmOrdTable, sizeof(char), sizeof(stmOrdTable), outSTM);
 
 		free(s3mHeader);
 		free(orderArray);
-		free(patptrArray);
-		free(instptrArray);
 
 		fclose(inS3M);
 		fclose(outSTM);
+
+		puts("Done!");
 		return 0;
 	} else if( argc > 3 ) {
 		puts("Too many arguments.");
