@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "MAIN.H"
-#include "clowncommon/clowncommon.h"
+#include "c_cmn.h"
 
 /* thanks A.I.! */
 unsigned int crc32(unsigned char buf[], unsigned int buf_len)
@@ -25,12 +25,20 @@ unsigned int crc32(unsigned char buf[], unsigned int buf_len)
 		hash ^= buf[i];
 
 		for (j = 0; j < 8; ++j) {
-            mask = -(hash & 1);
-            hash = (hash >> 1) ^ (0xEDB88320 & mask);
-        }
-    }
+			mask = -(hash & 1);
+			hash = (hash >> 1) ^ (0xEDB88320 & mask);
+		}
+	}
 
-    return ~hash;
+	return ~hash;
+}
+
+unsigned int xorshift32(register unsigned int state)
+{
+	state ^= state << 13;
+	state ^= state >> 17;
+	state ^= state << 5;
+	return state;
 }
 
 
@@ -42,6 +50,7 @@ int main(int argc, char *argv[]) {
 	unsigned char s3minstheader[80];
 	char *s3mPat;
 	char *orderArray;
+	unsigned char *sampleData;
 
 	/* I can't use dynamic allocation easily (mainly due to it defaulting to being signed...damn x86..) */
 	unsigned short patptrArray[255];
@@ -54,6 +63,7 @@ int main(int argc, char *argv[]) {
 	/* for sample conversion */
 	unsigned int parapointer = 0;
 	unsigned int crc = 0;
+	unsigned int rng = 0;
 
 	/* counters */
 	unsigned char ordCnt = 0;
@@ -64,9 +74,9 @@ int main(int argc, char *argv[]) {
 	unsigned char cv = 0;
 	unsigned short patSize = 0;
 	unsigned int stPat = 0xFF018000;
-	unsigned char s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
+	register unsigned char s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
 
-	puts("Screamverter\nby RepellantMold (2023)");
+	puts("Screamverter by RepellantMold (2023)");
 
 	if( argc == 3 ) {
 		FILE *inS3M;
@@ -128,14 +138,14 @@ int main(int argc, char *argv[]) {
 		}
 
 		fread(orderArray, sizeof(char), ordCnt, inS3M);
-		fread(instptrArray, sizeof(short), insCnt, inS3M);
+		fread(instptrArray, sizeof(char), insCnt * 2, inS3M);
 
 		for (s = 0; s < insCnt; ++s) {
 			/* turn the parapointers into regular pointers */
 			instptrArray[s] <<= 4;
 		}
 
-		fread(patptrArray, sizeof(short), patCnt, inS3M);
+		fread(patptrArray, sizeof(char), patCnt * 2, inS3M);
 
 		for (p = 0; p < patCnt; ++p) {
 			/* turn the parapointers into regular pointers */
@@ -168,14 +178,27 @@ int main(int argc, char *argv[]) {
 						memcpy(stmSampHeader, &s3minstheader[1], 12);
 					} else if (s3minstheader[48]) {
 						/* copy the sample name */
-						memcpy(stmSampHeader, &s3minstheader[48], 12);
-					} else {
-						/* perform a 32-bit CRC on the entire sample then put it into ASCII */
-						crc = crc32(s3minstheader, sizeof(s3minstheader));
+						memcpy(stmSampHeader, &s3minstheader[48], 8);
 
-						stmSampHeader[0] = ((crc & 9) >> 16) + 0x30;
-						stmSampHeader[1] = ((crc & 9) >> 8) + 0x30;
-						stmSampHeader[2] = (crc & 9) + 0x30;
+						/* perform a CRC32 on the sample name */
+						crc = crc32(&s3minstheader[1], sizeof(char) * 12);
+						stmSampHeader[9] = '.';
+						stmSampHeader[10] = ((crc & 9) >> 16) + 0x30;
+						stmSampHeader[11] = ((crc & 9) >> 8) + 0x30;
+						stmSampHeader[12] = (crc & 9) + 0x30;
+					} else {
+						/* perform a CRC32 on the entire sample header then put it into ASCII */
+						crc = crc32(s3minstheader, sizeof(s3minstheader));
+						rng = xorshift32(1337);
+
+						for (l = 0; l < 9; ++l)
+							/* use a random number and put the value into ASCII */
+							stmSampHeader[l] = CC_CLAMP('0', '9', rng & 0x0F);
+						
+						stmSampHeader[9] = '.';
+						stmSampHeader[10] = ((crc & 9) >> 16) + 0x30;
+						stmSampHeader[11] = ((crc & 9) >> 8) + 0x30;
+						stmSampHeader[12] = (crc & 9) + 0x30;
 					}
 
 					/* if the loop flag is set... */
@@ -211,6 +234,7 @@ int main(int argc, char *argv[]) {
 					/* c2 speed */
 					if (s3minstheader[34] || s3minstheader[35])
 						puts("WARNING: C2 speed is too high, it will be truncated!");
+
 					stmSampHeader[24] = s3minstheader[32];
 					stmSampHeader[25] = s3minstheader[33];
 
@@ -281,6 +305,7 @@ int main(int argc, char *argv[]) {
 
 		for(p = 0; p < patCnt; ++p) {
 			fseek(inS3M, patptrArray[p], SEEK_SET);
+
 			fread(&patSize, sizeof(char), 2, inS3M);
 
 			s3mPat = (char*)calloc(patSize, sizeof(char));
@@ -289,8 +314,10 @@ int main(int argc, char *argv[]) {
 				return 2;
 			}
 
-			/*
-			for(r = 0; r < 64; ++r) {
+			fread(s3mPat, sizeof(char), sizeof(s3mPat), inS3M);
+
+			/* TODO: get something functional...
+			while(1) {
 				cv = *(s3mPat++);
 				if (0 == cv) break;
 
@@ -304,17 +331,22 @@ int main(int argc, char *argv[]) {
 				}
 
 				if((cv & 0x80) != 0) {
-					s3mEff = *(s3mPat++);
+					s3mEff = *(s3mPat++) & 0x1F;
 					s3mParam = *(s3mPat++);
-					s3mEff &= 0x1F;
 				}
 
-				printf("Note: %u, Octave: %u, Instrument: %u, Volume: %u, Effect: %u, Parameter: %X\n", s3mNote, s3mNote & 0x0F, s3mIns, s3mVol, s3mEff, s3mParam);
+				printf("Channel %02u: Note: %02X, Octave: %02X, Instrument: %02X, Volume: %02X, Effect: %02X, Parameter: %02X\n", cv & 31, s3mNote, s3mNote & 0x0F, s3mIns, s3mVol, s3mEff, s3mParam);
 
 			}
 			*/
 
 			free(s3mPat);
+		}
+
+		/* now grab the data */
+		for (s = 0; s < 31; ++s) {
+			/* clear the header */
+			fseek(inS3M, instdatptrArray[s], SEEK_SET);
 		}
 
 		fclose(inS3M);
