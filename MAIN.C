@@ -41,7 +41,6 @@ int main(int argc, char *argv[]) {
 	char *s3mHeader;
 	unsigned char s3minstheader[80];
 	char *s3mPat;
-	char *stmPat;
 	char *orderArray;
 
 	/* I can't use dynamic allocation easily (mainly due to it defaulting to being signed...damn x86..) */
@@ -64,6 +63,8 @@ int main(int argc, char *argv[]) {
 	/* for pattern conversion */
 	unsigned char cv = 0;
 	unsigned short patSize = 0;
+	unsigned int stPat = 0xFF018000;
+	unsigned char s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
 
 	puts("Screamverter\nby RepellantMold (2023)");
 
@@ -142,9 +143,12 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (insCnt > 31) puts("WARNING: more than 31 samples found!");
+		else printf("Found %d samples.\n", insCnt);
 
 		/* Copy over the sample data */
 		for (s = 0; s < 31; ++s) {
+			/* clear the header */
+			memset(stmSampHeader, 0, sizeof(stmSampHeader));
 			if (s < insCnt) {
 				fseek(inS3M, instptrArray[s], SEEK_SET);
 				/* printf("%X - %lX\n", instptrArray[s], ftell(inS3M)); */
@@ -285,7 +289,30 @@ int main(int argc, char *argv[]) {
 				return 2;
 			}
 
+			/*
+			for(r = 0; r < 64; ++r) {
+				cv = *(s3mPat++);
+				if (0 == cv) break;
 
+				if((cv & 0x20) != 0) {
+					s3mNote = *(s3mPat++);
+					s3mIns = *(s3mPat++);
+				}
+				
+				if((cv & 0x40) != 0) {
+					s3mVol = *(s3mPat++);
+				}
+
+				if((cv & 0x80) != 0) {
+					s3mEff = *(s3mPat++);
+					s3mParam = *(s3mPat++);
+					s3mEff &= 0x1F;
+				}
+
+				printf("Note: %u, Octave: %u, Instrument: %u, Volume: %u, Effect: %u, Parameter: %X\n", s3mNote, s3mNote & 0x0F, s3mIns, s3mVol, s3mEff, s3mParam);
+
+			}
+			*/
 
 			free(s3mPat);
 		}
