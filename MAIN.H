@@ -22,7 +22,7 @@ unsigned char stmSongHeader[48] = {
 
 };
 
-unsigned char stmSampHeader[64] = {
+unsigned char stmSampHeader[32] = {
 
 	/* sample title (ASCIIZ) */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

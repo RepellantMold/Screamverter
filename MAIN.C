@@ -16,12 +16,23 @@
 #include "MAIN.H"
 #include "clowncommon/clowncommon.h"
 
-unsigned int xorshift32(unsigned int state) {
-	state ^= state << 13;
-	state ^= state >> 17;
-	state ^= state << 5;
-	return state;
+/* thanks A.I.! */
+unsigned int crc32(unsigned char buf[], unsigned int buf_len)
+{
+	unsigned int hash = 0, mask = 0;
+	register unsigned int i = 0, j = 0;
+	for (; i < buf_len; ++i) {
+		hash ^= buf[i];
+
+		for (j = 0; j < 8; ++j) {
+            mask = -(hash & 1);
+            hash = (hash >> 1) ^ (0xEDB88320 & mask);
+        }
+    }
+
+    return ~hash;
 }
+
 
 int main(int argc, char *argv[]) {
 
@@ -39,7 +50,7 @@ int main(int argc, char *argv[]) {
 	unsigned short instdatptrArray[99];
 
 	/* pattern, row, channel, sample, order, length, name */
-	unsigned char p = 0, r = 0, c = 0, s = 0, o = 0, l = 0, n = 0;
+	register unsigned char p = 0, r = 0, c = 0, s = 0, o = 0, l = 0, n = 0;
 
 	/* for sample conversion */
 	unsigned int parapointer = 0;
@@ -114,7 +125,7 @@ int main(int argc, char *argv[]) {
 			puts("Failed to allocate memory.");
 			return 2;
 		}
-		
+
 		fread(orderArray, sizeof(char), ordCnt, inS3M);
 		fread(instptrArray, sizeof(short), insCnt, inS3M);
 
@@ -139,64 +150,92 @@ int main(int argc, char *argv[]) {
 				/* printf("%X - %lX\n", instptrArray[s], ftell(inS3M)); */
 				fread(s3minstheader, sizeof(char), 80, inS3M);
 
-				/* this will be saved for later for when sample data itself has to be converted */
-				parapointer = (s3minstheader[13] << 16) + (s3minstheader[15] << 8) + s3minstheader[14];
+				/* if the sample itself is not a message */
+				if (s3minstheader[0]) {
+					/* this will be saved for later for when sample data itself has to be converted */
+					parapointer = (s3minstheader[13] << 16) + (s3minstheader[15] << 8) + s3minstheader[14];
 
-				/* turn the parapointers into regular pointers */
-				instdatptrArray[s] = parapointer << 4;
+					/* turn the parapointers into regular pointers */
+					instdatptrArray[s] = parapointer << 4;
 
-				/* if the file name is not blank in the instrument */
-				if (s3minstheader[1]) {
-					/* file name */
-					memcpy(stmSampHeader, &s3minstheader[1], 12);
+					/* if the file name is not blank in the instrument */
+					if (s3minstheader[1]) {
+						/* file name */
+						memcpy(stmSampHeader, &s3minstheader[1], 12);
+					} else if (s3minstheader[48]) {
+						/* copy the sample name */
+						memcpy(stmSampHeader, &s3minstheader[48], 12);
+					} else {
+						/* perform a 32-bit CRC on the entire sample then put it into ASCII */
+						crc = crc32(s3minstheader, sizeof(s3minstheader));
+
+						stmSampHeader[0] = ((crc & 9) >> 16) + 0x30;
+						stmSampHeader[1] = ((crc & 9) >> 8) + 0x30;
+						stmSampHeader[2] = (crc & 9) + 0x30;
+					}
+
+					/* if the loop flag is set... */
+					if (s3minstheader[31] & 1) {
+						if (s3minstheader[22] || s3minstheader[23])
+							puts("WARNING: start of loop length is too long, it will be truncated!");
+						else if (s3minstheader[26] || s3minstheader[27])
+							puts("WARNING: end of loop length is too long, it will be truncated!");
+
+						/* loop start and loop end */
+						stmSampHeader[18] = s3minstheader[20];
+						stmSampHeader[19] = s3minstheader[21];
+						stmSampHeader[20] = s3minstheader[24];
+						stmSampHeader[21] = s3minstheader[25];
+					} else {
+						/* no loop */
+						stmSampHeader[18] = 0;
+						stmSampHeader[19] = 0;
+						stmSampHeader[20] = 0xFF;
+						stmSampHeader[21] = 0xFF;
+					}
+
+					/* sample length */
+					if (s3minstheader[18] || s3minstheader[19])
+						puts("WARNING: Sample length is too long, it will be truncated!");
+
+					stmSampHeader[16] = s3minstheader[16];
+					stmSampHeader[17] = s3minstheader[17];
+
+					/* default volume */
+					stmSampHeader[22] = s3minstheader[28];
+
+					/* c2 speed */
+					if (s3minstheader[34] || s3minstheader[35])
+						puts("WARNING: C2 speed is too high, it will be truncated!");
+					stmSampHeader[24] = s3minstheader[32];
+					stmSampHeader[25] = s3minstheader[33];
+
+					stmSampHeader[22] = s3minstheader[28];
 				} else {
-					memcpy(stmSampHeader, &s3minstheader[48], 8);
-					stmSampHeader[9] = '.';
-					stmSampHeader[10] = 'S';
-					stmSampHeader[11] = 'M';
-					stmSampHeader[12] = 'P';
-				}
-				
-				/* if the loop flag is set... */
-				if (s3minstheader[31] & 1) {
-					if (s3minstheader[22] || s3minstheader[23])
-						puts("WARNING: start of loop length is too long, it will be truncated!");
-					else if (s3minstheader[26] || s3minstheader[27])
-						puts("WARNING: end of loop length is too long, it will be truncated!");
+					/* if it is a message then don't copy anything besides the title over */
+					memcpy(stmSampHeader, &s3minstheader[48], 12);
+
+					/* sample length */
+					stmSampHeader[16] = 0;
+					stmSampHeader[17] = 0;
 
 					/* loop start and loop end */
-					stmSampHeader[18] = s3minstheader[20];
-					stmSampHeader[19] = s3minstheader[21];
-					stmSampHeader[20] = s3minstheader[24];
-					stmSampHeader[21] = s3minstheader[25];
-				} else {
-					/* no loop */
 					stmSampHeader[18] = 0;
 					stmSampHeader[19] = 0;
 					stmSampHeader[20] = 0xFF;
 					stmSampHeader[21] = 0xFF;
+
+					/* default volume */
+					stmSampHeader[22] = 0;
+
+					/* c2 speed */
+					stmSampHeader[24] = 81;
+					stmSampHeader[25] = 92;
 				}
-				
-				/* sample length */
-				if (s3minstheader[18] || s3minstheader[19])
-					puts("WARNING: Sample length is too long, it will be truncated!");
 
-				stmSampHeader[16] = s3minstheader[16];
-				stmSampHeader[17] = s3minstheader[17];
-			
-				/* default volume */
-				stmSampHeader[22] = s3minstheader[28];
-				
-				/* c2 speed */
-				if (s3minstheader[34] || s3minstheader[35])
-					puts("WARNING: C2 speed is too high, it will be truncated!");
-				stmSampHeader[24] = s3minstheader[32];
-				stmSampHeader[25] = s3minstheader[33];
-
-				stmSampHeader[22] = s3minstheader[28];
 			} else {
 				/* default stuff if there's no other samples */
-				
+
 				for (n = 0; n < 12; ++n) {
 					stmSampHeader[n] = 0;
 				}
@@ -217,7 +256,7 @@ int main(int argc, char *argv[]) {
 				/* c2 speed */
 				stmSampHeader[24] = 81;
 				stmSampHeader[25] = 92;
-			} 
+			}
 
 			fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), outSTM);
 		}
@@ -246,7 +285,7 @@ int main(int argc, char *argv[]) {
 				return 2;
 			}
 
-			
+
 
 			free(s3mPat);
 		}
