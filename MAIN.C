@@ -17,10 +17,10 @@
 #include "c_cmn.h"
 
 /* thanks A.I.! */
-unsigned int crc32(unsigned char buf[], unsigned int buf_len)
+cc_u32l crc32(cc_u8l buf[], cc_u32l buf_len)
 {
-	unsigned int hash = 0, mask = 0;
-	register unsigned int i = 0, j = 0;
+	cc_u32l hash = 0, mask = 0;
+	register cc_u32l i = 0, j = 0;
 	for (; i < buf_len; ++i) {
 		hash ^= buf[i];
 
@@ -33,7 +33,7 @@ unsigned int crc32(unsigned char buf[], unsigned int buf_len)
 	return ~hash;
 }
 
-unsigned int xorshift32(register unsigned int state)
+cc_u32l xorshift32(register cc_u32l state)
 {
 	state ^= state << 13;
 	state ^= state >> 17;
@@ -47,34 +47,34 @@ int main(int argc, char *argv[]) {
 	/* I'm only able to write in bytes at a time,
 	and I have to dynamically allocate memory! */
 	char *s3mHeader;
-	unsigned char s3minstheader[80];
+	cc_u8l s3minstheader[80];
 	char *s3mPat;
 	char *orderArray;
-	unsigned char *sampleData;
+	cc_u8l *sampleData;
 
 	/* I can't use dynamic allocation easily (mainly due to it defaulting to being signed...damn x86..) */
-	unsigned short patptrArray[255];
-	unsigned short instptrArray[99];
-	unsigned short instdatptrArray[99];
+	cc_u16l patptrArray[255];
+	cc_u16l instptrArray[99];
+	cc_u16l instdatptrArray[99];
 
 	/* pattern, row, channel, sample, order, length, name */
-	register unsigned char p = 0, r = 0, c = 0, s = 0, o = 0, l = 0, n = 0;
+	register cc_u8l p = 0, r = 0, c = 0, s = 0, o = 0, l = 0, n = 0;
 
 	/* for sample conversion */
-	unsigned int parapointer = 0;
-	unsigned int crc = 0;
-	unsigned int rng = 0;
+	cc_u32l parapointer = 0;
+	cc_u32l crc = 0;
+	cc_u32l rng = 0;
 
 	/* counters */
-	unsigned char ordCnt = 0;
-	unsigned char patCnt = 0;
-	unsigned char insCnt = 0;
+	register cc_u8l ordCnt = 0;
+	register cc_u8l patCnt = 0;
+	register cc_u8l insCnt = 0;
 
 	/* for pattern conversion */
-	unsigned char cv = 0;
-	unsigned short patSize = 0;
-	unsigned int stPat = 0xFF018000;
-	register unsigned char s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
+	cc_u8l cv = 0;
+	cc_u16l patSize = 0;
+	cc_u32l stPat = 0xFF018000;
+	register cc_u8l s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
 
 	puts("Screamverter by RepellantMold (2023)");
 
@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		for (o = 0; o < ordCnt; ++o) {
-			if ((unsigned char)orderArray[o] < 254) {
+			if ((cc_u8l)orderArray[o] < 254) {
 				/* Copy over the order data if there's no markers */
 				stmOrdTable[l] = orderArray[o];
 				++l;
