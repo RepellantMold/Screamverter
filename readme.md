@@ -1,17 +1,15 @@
 # Screamverter
 
 Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
-I also use (clowncommon by Clownacy)[https://github.com/Clownacy/clowncommon] for some macros. (my modifications are mainly removing `CC_STRUCT_POINTER_FROM_MEMBER_POINTER` and `CC_ATTRIBUTE_PRINTF`)
 
 ## Building
 
-It should be as simple as running your favorite compiler on `main.c`
-You can also run "nmake scream.mak" if you run Microsoft Quick C for MS-DOS.
+It should be as simple as running premake5.
 
 ## Requirements
 
 It'd probably be a lot to ask of one person to convert an S3M file to an STM...
-Especially when there's so much *emphasis* on the **points**!
+Especially when there's so much _emphasis_ on the **points**!
 
 - 4 channels **only**, no more, no less!
 - No panning, ScreamTracker 2 is _**mono**_!
@@ -20,19 +18,18 @@ Especially when there's so much *emphasis* on the **points**!
 
 ## Effects table
 
-
 | Effect | Function (in ST2) | Notes (Effect memory **does not exist** in ScreamTracker 2!)                                                                                                                   |
-| -------: | :-----------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| -----: | :---------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 |    Axx |  Set speed/tempo  | It has a scaling factor alongside setting speed                                                                                                                                |
-|    Bxx |  Set next order  | It does not perform an immediate pattern break, so it's best to place it with a Pattern break if you want it to function like other trackers.                                  |
+|    Bxx |  Set next order   | It does not perform an immediate pattern break, so it's best to place it with a Pattern break if you want it to function like other trackers.                                  |
 |    Cxx |   Pattern break   |                                                                                                                                                                                |
-|    Dxy |   Volume slide   | There's no fine slides, and y will take priority is both x and y are specified.                                                                                                |
+|    Dxy |   Volume slide    | There's no fine slides, and y will take priority is both x and y are specified.                                                                                                |
 |    Exx |  Portamento down  | This effect can underflow, and there are no fine/extra-fine slides.                                                                                                            |
 |    Fxx |   Portamento up   | This effect can overflow, ditto for fine/extra-fine slides.                                                                                                                    |
 |    Gxx |  Tone portamento  |                                                                                                                                                                                |
 |    Hxy |      Vibrato      | The depth is doubled compared to Scream Tracker 3+ and Amiga                                                                                                                   |
-|    Ixy |      Tremor      |                                                                                                                                                                                |
-|    Jxy |     Arpeggio     | This effect has a rather strange bug where it skips to whatever is specified in y halfway through a row if x was 0, but do not expect this bug to be emulated by every player. |
+|    Ixy |      Tremor       |                                                                                                                                                                                |
+|    Jxy |     Arpeggio      | This effect has a rather strange bug where it skips to whatever is specified in y halfway through a row if x was 0, but do not expect this bug to be emulated by every player. |
 |    Kxx |      (No-op)      | This can be entered into the editor but it does not do anything.                                                                                                               |
 |    Lxx |      (No-op)      | Ditto.                                                                                                                                                                         |
 |    Mxx |      (No-op)      | Ditto again.                                                                                                                                                                   |
