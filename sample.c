@@ -66,9 +66,7 @@ unsigned short savedsamplelengths[99];
 char* sampleData;
 
 void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptaboffs) {
-	register unsigned int crc = 0;
-	register unsigned int rng = 0;
-	register unsigned int l = 0;
+	register unsigned int crc = 0, rng = 0, l = 0;
 
 	fseek(inS3M, parapointer, SEEK_SET);
 	fread(s3minstheader, sizeof(char), sizeof(s3minstheader), inS3M);
@@ -206,6 +204,9 @@ int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsign
 		puts("Failed to allocate memory.");
 		return 2;
 	}
+
+	for(l = 0; l < size; ++l)
+		sampleData[l] += 0x80;
 
 	fwrite(sampleData, sizeof(char), sizeof(sampleData), outSTM);
 

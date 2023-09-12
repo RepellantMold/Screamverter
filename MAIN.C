@@ -39,7 +39,9 @@ int main(int argc, char *argv[]) {
 	register unsigned char insCnt = 0;
 
 	/* oh hey it's me! */
-	puts("Screamverter by RepellantMold (2023)");
+	puts("Screamverter by RepellantMold (2023)\n"
+	"This code is licensed under MIT-0.\n"
+	"This is a very rough for fun project, so expect some bugs.");
 
 	if( argc == 3 ) {
 		/* open input/output files (and error if something goes wrong in any way) */
@@ -138,12 +140,18 @@ int main(int argc, char *argv[]) {
 		fwrite(stmOrdTable, sizeof(char), sizeof(stmOrdTable), outSTM);
 
 		for (p = 0; p < patCnt; ++p) {
+			printf("pattern %02X\n", p);
 			convertPattern(inS3M, outSTM, patptrArray[p]);
 		}
 
 		/* now grab the data */
 		for (s = 0; s < 31; ++s) {
-			/*convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);*/
+			unsigned short pointer = ftell(outSTM) >> 4;
+			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
+			unsigned short beforeposition = ftell(outSTM);
+			fseek(outSTM, (sizeof(stmSongHeader) + sizeof(stmSampHeader)) - 2, SEEK_SET);
+			fwrite(&pointer, sizeof(char), 2, outSTM);
+			fseek(outSTM, beforeposition, SEEK_SET);
 		}
 
 		fclose(inS3M);
