@@ -7,7 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  # a reference to an old OSFirstTimer video
+  build-abunchew:
 
     runs-on: ubuntu-latest
 
@@ -20,3 +21,15 @@ jobs:
         version: '5.0.0-beta1'
         action: 'gmake'
         options: '--cc=clang'
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+    - name: Run premake '5.0.0-beta1'
+      uses: eariassoto/setup-premake@v1
+      with:
+        version: '5.0.0-beta1'
+        action: 'gmake2'
