@@ -146,11 +146,15 @@ int main(int argc, char *argv[]) {
 
 		/* now grab the data */
 		for (s = 0; s < 31; ++s) {
-			unsigned short pointer = ftell(outSTM) >> 4;
+			unsigned int pointer = ftell(outSTM) >> 4;
 			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
-			unsigned short beforeposition = ftell(outSTM);
-			fseek(outSTM, (sizeof(stmSongHeader) + sizeof(stmSampHeader)) - 2, SEEK_SET);
+			unsigned int beforeposition = ftell(outSTM);
+
+			/* correct the pointer in the sample header that we couldn't get before. */
+			fseek(outSTM, sizeof(stmSongHeader) + (sizeof(stmSampHeader) - 2), SEEK_SET);
 			fwrite(&pointer, sizeof(char), 2, outSTM);
+
+			/* get back to our position before we had to correct the pointer. */
 			fseek(outSTM, beforeposition, SEEK_SET);
 		}
 

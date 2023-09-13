@@ -13,7 +13,11 @@ project "Screamverter"
       defines { "DEBUG" }
       symbols "On"
       optimize "Debug"
+      cdialect "C89"
+      warnings "Extra"
 
    filter "configurations:Release"
       defines { "NDEBUG" }
       optimize "Size"
+      cdialect "C89"
+      warnings "Extra"

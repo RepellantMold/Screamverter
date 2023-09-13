@@ -14,7 +14,6 @@ int convertPattern(FILE *inS3M, FILE* outSTM, unsigned short pointer) {
 	register unsigned char r = 0, c = 0;
 	unsigned short packedlen;
 
-	/* TODO: Everything! */
 	fseek(inS3M, pointer, SEEK_SET);
 
 	fread(&packedlen, sizeof(char), 2, inS3M);
@@ -51,22 +50,31 @@ int convertPattern(FILE *inS3M, FILE* outSTM, unsigned short pointer) {
 			c = cv & 15;
 
 			/* if there's a note/instrument present */
-			if ((cv & 0x20) != 0) {
+			if (cv & 0x20) {
 				s3mNote = *(p++);
 				s3mIns = *(p++);
 			}
 
-			if ((cv & 0x40) != 0) {
+			if (cv & 0x40) {
 				s3mVol = *(p++);
 			}
 
-			if ((cv & 0x80) != 0) {
+			if (cv & 0x80) {
 				s3mEff = *(p++) & 0x1F;
 				s3mParam = *(p++);
 			}
 
+			/* Annoyingly, Scream Tracker 2's TECH.DOC only mentions *decoding* this, not *encoding*..
+			 * (shown below with cleaned up formatting)
+			 * note = [BYTE0] & 15 (C=0,C#=1,D=2...)
+			 * octave = [BYTE0] / 16 (or shift right 4)
+			 * instrument = [BYTE1] / 8 (or shift right 3)
+			 * volume = ([BYTE1] & 7) + [BYTE2] / 2 (or shift right 1)
+			 * command = [BYTE2] & 15
+			 * command info = [BYTE3]
+			 * Why Sami made the pattern format in Scream Tracker 2 this way, I have no clue... */
 			stPat[0] = s3mNote;
-			stPat[1] |= (s3mIns >> 3) & 0b00011111;
+			stPat[1] |= (s3mIns >> 3) & 31; /* 0b00011111 */
 			stPat[1] |= s3mVol & 0x07;
 			stPat[2] |= (s3mVol >> 3) & (0xFF << (8 - 3));
 			stPat[2] |= s3mEff & 0x07;
@@ -78,7 +86,6 @@ int convertPattern(FILE *inS3M, FILE* outSTM, unsigned short pointer) {
 		}
 	}
 	
-
 	free(s3mPat);
 
 	return 0;

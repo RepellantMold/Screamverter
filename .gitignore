@@ -556,3 +556,5 @@ FodyWeavers.xsd
 *.vcxproj
 *.make
 Makefile
+ST/*.*
+ST/*
