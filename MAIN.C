@@ -24,24 +24,26 @@ their unportable versions of the library. |:c */
 int main(int argc, char *argv[]) {
 	char s3mHeader[96];
 
-	/*	(having this be dynamic cause
-		there's no way to tell what
-		the size would be beforehand.) */
+	/* having this be dynamic cause there's no way to tell what the size would be beforehand. */
 	char *orderArray;
 
 
 	/* some one lettererererers */
-	register unsigned char p = 0, s = 0, o = 0, l = 0;
+	register unsigned char p = 0, s = 0, o = 0, l = 0, c = 0;
+
+	unsigned char channelread = 0;
 
 	/* counters */
 	register unsigned char ordCnt = 0;
 	register unsigned char patCnt = 0;
 	register unsigned char insCnt = 0;
 
+	unsigned char padding = 0;
+
 	/* oh hey it's me! */
 	puts("Screamverter by RepellantMold (2023)\n"
 	"This code is licensed under MIT-0.\n"
-	"This is a very rough for fun project, so expect some bugs.");
+	"This (within reason) converts S3M files to STM files.");
 
 	if( argc == 3 ) {
 		/* open input/output files (and error if something goes wrong in any way) */
@@ -60,7 +62,15 @@ int main(int argc, char *argv[]) {
 		}
 
 		/* read header */
-		fread(s3mHeader, sizeof(char), 96, inS3M);
+		fread(s3mHeader, sizeof(char), 64, inS3M);
+
+		for (l = 0; l < 32; ++l) {
+			fread(&channelread, sizeof(char), 1, inS3M);
+			if (channelread < 16) {
+				channelRemap[l] = c;
+				++c;
+			}
+		}		
 
 		puts("Converting header...");
 
@@ -99,13 +109,12 @@ int main(int argc, char *argv[]) {
 
 		fread(orderArray, sizeof(char), ordCnt, inS3M);
 		fread(instptrArray, sizeof(char), insCnt * 2, inS3M);
+		fread(patptrArray, sizeof(char), patCnt * 2, inS3M);
 
 		for (s = 0; s < insCnt; ++s) {
 			/* turn the parapointers into regular pointers */
 			instptrArray[s] <<= 4;
 		}
-
-		fread(patptrArray, sizeof(char), patCnt * 2, inS3M);
 
 		for (p = 0; p < patCnt; ++p) {
 			/* turn the parapointers into regular pointers */
@@ -118,7 +127,7 @@ int main(int argc, char *argv[]) {
 		for (s = 0; s < 31; ++s) {
 			/* convert all the instruments specified in the file, otherwise just generate a blank sample. */
 			if (s < insCnt) convertSample(inS3M, instptrArray[s], s);
-			else generateSample();
+			else generateBlankSample();
 
 			/* write it into the file */
 			fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), outSTM);
@@ -141,21 +150,30 @@ int main(int argc, char *argv[]) {
 
 		for (p = 0; p < patCnt; ++p) {
 			printf("pattern %02X\n", p);
-			convertPattern(inS3M, outSTM, patptrArray[p]);
+			readS3MPattern(inS3M, patptrArray[p]);
+			convertPattern(outSTM);
 		}
+
+		/* add padding */
+		fwrite(&padding, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
 
 		/* now grab the data */
 		for (s = 0; s < 31; ++s) {
-			unsigned int pointer = ftell(outSTM) >> 4;
-			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
+			/* generate the "paragraph" */
+			unsigned char pointer[2] = { 0x00, 0x00 };
 			unsigned int beforeposition = ftell(outSTM);
+			pointer[0] = beforeposition >> 8;
+			pointer[1] = beforeposition >> 16;
+			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
+			unsigned int afterposition = ftell(outSTM);
 
 			/* correct the pointer in the sample header that we couldn't get before. */
-			fseek(outSTM, sizeof(stmSongHeader) + (sizeof(stmSampHeader) - 2), SEEK_SET);
+			printf("%04X\n", (pointer[1] << 8) + pointer[0]);
+			fseek(outSTM, sizeof(stmSongHeader) + ((sizeof(stmSampHeader) * s) - 2), SEEK_SET);
 			fwrite(&pointer, sizeof(char), 2, outSTM);
 
 			/* get back to our position before we had to correct the pointer. */
-			fseek(outSTM, beforeposition, SEEK_SET);
+			fseek(outSTM, afterposition, SEEK_SET);
 		}
 
 		fclose(inS3M);

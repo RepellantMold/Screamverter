@@ -2,17 +2,17 @@
 
 Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
 
-## Building
+# Compiling
 
 It should be as simple as running premake5.
 
-## Requirements
+# Requirements for a decent conversion
 
 It'd probably be a lot to ask of one person to convert an S3M file to an STM...
-Especially when there's so much _emphasis_ on the **points**!
 
-- 4 channels **only**, no more, no less!
-- No panning, ScreamTracker 2 is _**mono**_!
+- 4 channels only, no more, no less!
+- Sample sizes cannot exceed 65535, and no 16-bit samples
+- No panning, ScreamTracker 2 is mono!
   - Adlib is also not supported.
 - You can only use the effects in the table if you want something _somewhat_ decent...
 
@@ -36,6 +36,6 @@ Especially when there's so much _emphasis_ on the **points**!
 |    Nxx |      (No-op)      | Ditto yet again.                                                                                                                                                               |
 |    Oxx |      (No-op)      | Do you get it now?..                                                                                                                                                           |
 
-## License
+# License
 
 [0MIT/MIT-0/MIT No Attribution](LICENSE), it can be relicensed under users discretion.

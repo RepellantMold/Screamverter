@@ -4,7 +4,7 @@
 #include "sample.h"
 
 unsigned short instptrArray[99];
-unsigned short instdatptrArray[99];
+unsigned int instdatptrArray[99];
 unsigned char stmSampHeader[32];
 
 /* thanks A.I.! */
@@ -131,7 +131,7 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 		if (s3minstheader[18] || s3minstheader[19])
 			puts("WARNING: Sample length is too long, it will be truncated!");
 
-		savedsamplelengths[pptaboffs] = (s3minstheader[16] << 8) + s3minstheader[17];
+		savedsamplelengths[pptaboffs] = (s3minstheader[17] << 8) + s3minstheader[16];
 		stmSampHeader[16] = s3minstheader[16];
 		stmSampHeader[17] = s3minstheader[17];
 
@@ -173,7 +173,7 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 	}
 }
 
-void generateSample() {
+void generateBlankSample() {
 	/* set a blank name */
 	memset(stmSampHeader, 0, 12);
 
@@ -196,26 +196,31 @@ void generateSample() {
 }
 
 int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size) {
+	/* if the pointer or size aren't set, ignore it */
+	if (!instdatptr || !size) return 0;
+	puts("Converting sample data...");
+	printf("Sample size: %u\nPointer: %08X\n", size, instdatptr);
 	register unsigned int l = 0;
+	unsigned char padding[16];
 	fseek(inS3M, instdatptr, SEEK_SET);
 
-	sampleData = (char*)calloc(size, sizeof(char));
+	sampleData = (char*)malloc(size);
 	if (sampleData == NULL) {
 		puts("Failed to allocate memory.");
 		return 2;
 	}
 
-	for(l = 0; l < size; ++l)
-		sampleData[l] += 0x80;
+	fread(sampleData, sizeof(char), size, inS3M);
 
-	fwrite(sampleData, sizeof(char), sizeof(sampleData), outSTM);
+	for (; l < size; ++l)
+		sampleData[l] = (sampleData[l] + 0x80) & 0xFF;
+
+	fwrite(sampleData, sizeof(char), size, outSTM);
 
 	free(sampleData);
 
 	/* generate padding */
-	unsigned short paddingSize = (16 - (size % 16)) % 16;
-	unsigned char padding = 0;
-	fwrite(&padding, sizeof(char), paddingSize, outSTM);
+	fwrite(&padding, sizeof(char), 16, outSTM);
 
 	return 0;
 }
