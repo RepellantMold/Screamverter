@@ -1,0 +1,8 @@
+{
+        "configurations": [
+            {
+                    "optimizeStylesheetParsing": true
+            }
+        ],
+        "editor.formatOnSave": false
+}

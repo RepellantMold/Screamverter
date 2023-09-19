@@ -121,10 +121,16 @@ int main(int argc, char *argv[]) {
 			patptrArray[p] <<= 4;
 		}
 
-		if (insCnt > 31) puts("WARNING: more than 31 samples found!");
+		if (ordCnt > 128) puts("WARNING: more than 128 orders found!");
+		else printf("Found %d orders.\n", ordCnt);
+
+		if (patCnt > 99) puts("WARNING: more than 99 patterns found!");
+		else printf("Found %d patterns.\n", patCnt);
+
+		if (insCnt > 30) puts("WARNING: more than 31 samples found!");
 		else printf("Found %d samples.\n", insCnt);
 
-		for (s = 0; s < 31; ++s) {
+		for (s = 0; s < 30; ++s) {
 			/* convert all the instruments specified in the file, otherwise just generate a blank sample. */
 			if (s < insCnt) convertSample(inS3M, instptrArray[s], s);
 			else generateBlankSample();
@@ -135,7 +141,7 @@ int main(int argc, char *argv[]) {
 
 		/* add in the pattern markers */
 		for (o = 0; o < ordCnt; ++o) {
-			if ((unsigned)orderArray[o] < 254) {
+			if ((unsigned)orderArray[o] < 99) {
 				/* Copy over the order data if there's no markers */
 				stmOrdTable[l] = orderArray[o];
 				++l;
@@ -158,17 +164,17 @@ int main(int argc, char *argv[]) {
 		fwrite(&padding, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
 
 		/* now grab the data */
-		for (s = 0; s < 31; ++s) {
+		for (s = 0; s < 30; ++s) {
 			/* generate the "paragraph" */
 			unsigned char pointer[2] = { 0x00, 0x00 };
-			unsigned int beforeposition = ftell(outSTM);
-			pointer[0] = beforeposition >> 8;
-			pointer[1] = beforeposition >> 16;
+			unsigned int beforeposition = ftell(outSTM) >> 4;
+			pointer[0] = beforeposition;
+			pointer[1] = beforeposition >> 8;
 			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
 			unsigned int afterposition = ftell(outSTM);
 
 			/* correct the pointer in the sample header that we couldn't get before. */
-			printf("%04X\n", (pointer[1] << 8) + pointer[0]);
+			/* printf("%04X\n", (pointer[1] << 8) + pointer[0]); */
 			fseek(outSTM, sizeof(stmSongHeader) + ((sizeof(stmSampHeader) * s) - 2), SEEK_SET);
 			fwrite(&pointer, sizeof(char), 2, outSTM);
 

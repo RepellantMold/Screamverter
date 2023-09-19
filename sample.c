@@ -49,11 +49,11 @@ unsigned char stmSampHeader[32] = {
 	/* loop end */
 	0xFF, 0xFF,
 	/* default volume */
-	64,
+	0,
 	/* reserved */
 	0,
 	/* c2 speed */
-	81, 92,
+	0x21, 0x00,
 	/* reserved */
 	0, 0, 0, 0,
 	/* segment (12-bit pointer) */
@@ -76,22 +76,22 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 		/* this will be saved for later for when sample data itself has to be converted */
 		instdatptrArray[pptaboffs] = ((s3minstheader[13] << 16) + (s3minstheader[15] << 8) + s3minstheader[14]) << 4;
 
-		/* if the file name is not blank in the instrument */
-		if (s3minstheader[1]) {
-			/* copy the file name */
-			memcpy(stmSampHeader, &s3minstheader[1], 12);
-		}
-		/* otherwise if the sample name isn't blank */
-		else if (s3minstheader[48]) {
+		/* if the sample name is not blank in the instrument */
+		if (s3minstheader[48]) {
 			/* copy the sample name (heavily truncated) */
 			memcpy(stmSampHeader, &s3minstheader[48], 8);
 
 			/* perform a CRC32 on the sample name */
 			crc = crc32(&s3minstheader[48], sizeof(char) * 28);
 			stmSampHeader[9] = '.';
-			stmSampHeader[10] = ((crc & 9) >> 16) + 0x30;
-			stmSampHeader[11] = ((crc & 9) >> 8) + 0x30;
+			stmSampHeader[10] = ((crc & 9) >> 8) + 0x30;
+			stmSampHeader[11] = ((crc & 9) >> 4) + 0x30;
 			stmSampHeader[12] = (crc & 9) + 0x30;
+		}
+		/* otherwise if the file name isn't blank */
+		else if (s3minstheader[1]) {
+			/* copy the file name */
+			memcpy(stmSampHeader, &s3minstheader[1], 12);
 		} else {
 			/* perform a CRC32 on the entire sample header then put it into ASCII */
 			crc = crc32(s3minstheader, sizeof(s3minstheader));
@@ -99,11 +99,11 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 
 			for (l = 0; l < 9; ++l)
 				/* use a random number and put the value into ASCII */
-				stmSampHeader[l] = 0x30 + (rng & 9);
+				stmSampHeader[l] = 0x30 + (xorshift32(rng) & 9);
 
 			stmSampHeader[9] = '.';
-			stmSampHeader[10] = ((crc & 9) >> 16) + 0x30;
-			stmSampHeader[11] = ((crc & 9) >> 8) + 0x30;
+			stmSampHeader[10] = ((crc & 9) >> 8) + 0x30;
+			stmSampHeader[11] = ((crc & 9) >> 4) + 0x30;
 			stmSampHeader[12] = (crc & 9) + 0x30;
 		}
 
@@ -168,8 +168,8 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 		stmSampHeader[22] = 0;
 
 		/* c2 speed */
-		stmSampHeader[24] = 81;
-		stmSampHeader[25] = 92;
+		stmSampHeader[24] = 0x21;
+		stmSampHeader[25] = 0x00;
 	}
 }
 
@@ -191,17 +191,17 @@ void generateBlankSample() {
 	stmSampHeader[22] = 0;
 
 	/* c2 speed */
-	stmSampHeader[24] = 81;
-	stmSampHeader[25] = 92;
+	stmSampHeader[24] = 0x21;
+	stmSampHeader[25] = 0x00;
 }
 
 int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size) {
 	/* if the pointer or size aren't set, ignore it */
-	if (!instdatptr || !size) return 0;
+	if (instdatptr == 0 || size == 0) return 0;
 	puts("Converting sample data...");
 	printf("Sample size: %u\nPointer: %08X\n", size, instdatptr);
 	register unsigned int l = 0;
-	unsigned char padding[16];
+	unsigned char padding = 0x00;
 	fseek(inS3M, instdatptr, SEEK_SET);
 
 	sampleData = (char*)malloc(size);
@@ -220,7 +220,7 @@ int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsign
 	free(sampleData);
 
 	/* generate padding */
-	fwrite(&padding, sizeof(char), 16, outSTM);
+	fwrite(&padding, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
 
 	return 0;
 }

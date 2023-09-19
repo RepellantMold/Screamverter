@@ -1,5 +1,6 @@
 #ifndef SCREAM
 #define SCREAM
+#include <stdio.h>
 
 unsigned char stmSongHeader[48] = {
 
@@ -11,7 +12,7 @@ unsigned char stmSongHeader[48] = {
 	/* DOS EoF */
 	0x1A,
 	/* file type (module) */
-	0x02,
+	2,
 	/* Major/minor version (2.21) */
 	2, 21,
 	/* intial tempo */
@@ -19,7 +20,7 @@ unsigned char stmSongHeader[48] = {
 	/* number of patterns */
 	0x00,
 	/* global volume */
-	0x40,
+	64,
 	/* ??? */
 	'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'
 
@@ -35,5 +36,10 @@ unsigned char stmOrdTable[128] = {
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+};
+
+void generate16BytePadding(FILE *outSTM) {
+	unsigned char paddingByte = 0;
+	fwrite(&paddingByte, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
 };
 #endif
