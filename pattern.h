@@ -7,3 +7,4 @@ extern unsigned char s3mPatArray[64][16][5];
 int readS3MPattern(FILE *inS3M, unsigned short pointer);
 int convertPattern(FILE* outSTM);
 #endif
+

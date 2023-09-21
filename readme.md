@@ -4,7 +4,12 @@ Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
 
 # Compiling
 
-It should be as simple as running premake5.
+~~It should be as simple as running xmake~~
+(having problems with linking, I hope to fix this at one point...)
+You can compile manually
+```bash
+$ cc main.c pattern.c sample.c 
+```
 
 # Requirements for a decent conversion
 

@@ -4,9 +4,8 @@
 
 unsigned char stmSongHeader[48] = {
 
-	/* song title (ASCIIZ) */
-	'S', 'r', 'e', 'a', 'm', 'v', 'e', 'r', 't', 'i', 'o', 'n', 0, 0, 0, 0,
-	0, 0, 0, 0,
+	/* song title (ASCIIZ, 20 characters) */
+	'S', 'r', 'e', 'a', 'm', 'v', 'e', 'r', 't', 'i', 'o', 'n', 0, 0, 0, 0, 0, 0, 0, 0,
 	/* magic */
 	'!', 'S', 'c', 'r', 'e', 'a', 'm', '!',
 	/* DOS EoF */
@@ -35,11 +34,9 @@ unsigned char stmOrdTable[128] = {
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
 	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
-	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99
 };
 
-void generate16BytePadding(FILE *outSTM) {
-	unsigned char paddingByte = 0;
-	fwrite(&paddingByte, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
-};
+void generate16BytePadding(FILE *outSTM);
 #endif
+

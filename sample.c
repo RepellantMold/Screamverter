@@ -63,7 +63,7 @@ unsigned char stmSampHeader[32] = {
 
 unsigned char s3minstheader[80];
 unsigned short savedsamplelengths[99];
-char* sampleData;
+unsigned char* sampleData;
 
 void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptaboffs) {
 	register unsigned int crc = 0, rng = 0, l = 0;
@@ -200,11 +200,11 @@ int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsign
 	if (instdatptr == 0 || size == 0) return 0;
 	puts("Converting sample data...");
 	printf("Sample size: %u\nPointer: %08X\n", size, instdatptr);
-	register unsigned int l = 0;
+	register unsigned int l;
 	unsigned char padding = 0x00;
 	fseek(inS3M, instdatptr, SEEK_SET);
 
-	sampleData = (char*)malloc(size);
+	sampleData = (unsigned char*)malloc(size);
 	if (sampleData == NULL) {
 		puts("Failed to allocate memory.");
 		return 2;
@@ -212,7 +212,7 @@ int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsign
 
 	fread(sampleData, sizeof(char), size, inS3M);
 
-	for (; l < size; ++l)
+	for (l = 0; l < size; ++l)
 		sampleData[l] = (sampleData[l] + 0x80) & 0xFF;
 
 	fwrite(sampleData, sizeof(char), size, outSTM);
@@ -220,7 +220,7 @@ int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsign
 	free(sampleData);
 
 	/* generate padding */
-	fwrite(&padding, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
+	generate16BytePadding(outSTM);
 
 	return 0;
 }

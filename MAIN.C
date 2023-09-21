@@ -22,16 +22,23 @@ their unportable versions of the library. |:c */
 
 
 int main(int argc, char *argv[]) {
-	char *s3mHeader;
+	unsigned char *s3mHeader;
+
+	unsigned int afterposition;
+	unsigned int beforeposition;
 
 	/* having this be dynamic cause there's no way to tell what the size would be beforehand. */
-	char *orderArray;
-
+	unsigned char *orderArray;
 
 	/* some one lettererererers */
 	register unsigned char p = 0, s = 0, o = 0, l = 0, c = 0;
 
-	unsigned char channelread = 0;
+	unsigned char channelread[32] = {
+		255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255,
+		255, 255, 255, 255, 255, 255, 255, 255
+	};
 
 	/* counters */
 	register unsigned char ordCnt = 0;
@@ -61,7 +68,7 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 		
-		s3mHeader = (char*)malloc(64);
+		s3mHeader = (unsigned char*)malloc(64);
 		if (s3mHeader == NULL) {
 			puts("Failed to allocate memory.");
 			return 2;
@@ -70,13 +77,11 @@ int main(int argc, char *argv[]) {
 		/* read header */
 		fread(s3mHeader, sizeof(char), 64, inS3M);
 
+		fread(&channelread, sizeof(char), 32, inS3M);
+
 		for (l = 0; l < 32; ++l) {
-			fread(&channelread, sizeof(char), 1, inS3M);
-			if (channelread < 16) {
-				channelRemap[l] = c;
-				++c;
-			}
-		}		
+				channelRemap[l] = (channelread[l] < 16) ? c++ : 255;
+		}
 
 		puts("Converting header...");
 
@@ -109,7 +114,7 @@ int main(int argc, char *argv[]) {
 
 		fwrite(stmSongHeader, sizeof(char), sizeof(stmSongHeader), outSTM);
 
-		orderArray = (char*)calloc(ordCnt, sizeof(char));
+		orderArray = (unsigned char*)calloc(ordCnt, sizeof(char));
 		if (orderArray == NULL) {
 			puts("Failed to allocate memory.");
 			return 2;
@@ -149,7 +154,7 @@ int main(int argc, char *argv[]) {
 
 		/* add in the pattern markers */
 		for (o = 0; o < ordCnt; ++o) {
-			if ((unsigned)orderArray[o] < 99) {
+			if (orderArray[o] < 99) {
 				/* Copy over the order data if there's no markers */
 				stmOrdTable[l] = orderArray[o];
 				++l;
@@ -175,11 +180,11 @@ int main(int argc, char *argv[]) {
 		for (s = 0; s < 30; ++s) {
 			/* generate the "paragraph" */
 			unsigned char pointer[2] = { 0x00, 0x00 };
-			unsigned int beforeposition = ftell(outSTM) >> 4;
+			beforeposition = ftell(outSTM) >> 4;
 			pointer[0] = beforeposition;
 			pointer[1] = beforeposition >> 8;
 			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
-			unsigned int afterposition = ftell(outSTM);
+			afterposition = ftell(outSTM);
 
 			/* correct the pointer in the sample header that we couldn't get before. */
 			/* printf("%04X\n", (pointer[1] << 8) + pointer[0]); */
@@ -202,4 +207,9 @@ int main(int argc, char *argv[]) {
 		puts("Expected usage: screamverter <filename.s3m> <filename.stm>");
 		return 1;
 	}
+}
+
+void generate16BytePadding(FILE *outSTM) {
+	unsigned char paddingByte = 0;
+	fwrite(&paddingByte, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
 }

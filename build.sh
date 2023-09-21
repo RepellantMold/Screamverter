@@ -1,0 +1,1 @@
+cc cc -std=c89 -Og -g -o screamverter.out main.c pattern.c sample.c

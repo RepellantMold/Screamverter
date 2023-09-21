@@ -4,7 +4,7 @@ target("MAIN")
     set_kind("binary")
     add_files("MAIN.C", "pattern.c", "sample.c")
 	
-	set_languages("c89")
+	set_languages("asni")
 	set_warnings("pedantic")
 
 --
