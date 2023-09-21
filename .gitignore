@@ -557,3 +557,4 @@ FodyWeavers.xsd
 *.make
 Makefile
 ST/*
+build/*

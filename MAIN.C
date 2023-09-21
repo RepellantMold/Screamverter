@@ -1,7 +1,7 @@
 /*
  * Screamverter by RepellantMold (2023)
  * This code is licensed under MIT-0.
-
+ *
  * Return values:
  * 0: Success
  * 1: Too many/not enough arguments
@@ -22,7 +22,7 @@ their unportable versions of the library. |:c */
 
 
 int main(int argc, char *argv[]) {
-	char s3mHeader[96];
+	char *s3mHeader;
 
 	/* having this be dynamic cause there's no way to tell what the size would be beforehand. */
 	char *orderArray;
@@ -59,6 +59,12 @@ int main(int argc, char *argv[]) {
 		if (outSTM == NULL) {
 			puts("Failed to write the file.");
 			return 1;
+		}
+		
+		s3mHeader = (char*)malloc(64);
+		if (s3mHeader == NULL) {
+			puts("Failed to allocate memory.");
+			return 2;
 		}
 
 		/* read header */
@@ -98,6 +104,8 @@ int main(int argc, char *argv[]) {
 
 		/* Global volume */
 		stmSongHeader[34] = s3mHeader[48];
+		
+		free(s3mHeader);
 
 		fwrite(stmSongHeader, sizeof(char), sizeof(stmSongHeader), outSTM);
 

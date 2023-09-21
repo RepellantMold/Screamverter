@@ -149,7 +149,7 @@ int convertPattern(FILE* outSTM) {
 			stPat[1] = (s3mIns & 31) >> 3; /* 0b00011111 */
 			stPat[1] |= s3mVol & 7;
 			stPat[2] = (s3mVol >> 3) & 5;
-			stPat[2] |= s3mEff & 7;
+			stPat[2] |= s3mEff & 15;
 			stPat[3] = s3mParam;
 
 			/*printf("row %02u channel %02u: %02X, %02X, %02X, %02X%02X = %08X\n", r, c, s3mNote, s3mIns, s3mVol, s3mEff, s3mParam, (stPat[0] + (stPat[1] << 8) + (stPat[2] << 16) + (stPat[3] << 24)));*/

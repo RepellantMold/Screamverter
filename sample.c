@@ -52,8 +52,8 @@ unsigned char stmSampHeader[32] = {
 	0,
 	/* reserved */
 	0,
-	/* c2 speed */
-	0x21, 0x00,
+	/* C2 speed */
+	0x00, 0x21,
 	/* reserved */
 	0, 0, 0, 0,
 	/* segment (12-bit pointer) */
@@ -84,9 +84,9 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 			/* perform a CRC32 on the sample name */
 			crc = crc32(&s3minstheader[48], sizeof(char) * 28);
 			stmSampHeader[9] = '.';
-			stmSampHeader[10] = ((crc & 9) >> 8) + 0x30;
-			stmSampHeader[11] = ((crc & 9) >> 4) + 0x30;
-			stmSampHeader[12] = (crc & 9) + 0x30;
+			stmSampHeader[10] = ((crc & 9) >> 8) + '0';
+			stmSampHeader[11] = ((crc & 9) >> 4) + '0';
+			stmSampHeader[12] = (crc & 9) + '0';
 		}
 		/* otherwise if the file name isn't blank */
 		else if (s3minstheader[1]) {
@@ -99,12 +99,12 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 
 			for (l = 0; l < 9; ++l)
 				/* use a random number and put the value into ASCII */
-				stmSampHeader[l] = 0x30 + (xorshift32(rng) & 9);
+				stmSampHeader[l] = '0' + (xorshift32(rng) & 9);
 
 			stmSampHeader[9] = '.';
-			stmSampHeader[10] = ((crc & 9) >> 8) + 0x30;
-			stmSampHeader[11] = ((crc & 9) >> 4) + 0x30;
-			stmSampHeader[12] = (crc & 9) + 0x30;
+			stmSampHeader[10] = ((crc & 9) >> 8) + '0';
+			stmSampHeader[11] = ((crc & 9) >> 4) + '0';
+			stmSampHeader[12] = (crc & 9) + '0';
 		}
 
 		/* if the loop flag is set... */
@@ -138,7 +138,7 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 		/* default volume */
 		stmSampHeader[22] = s3minstheader[28];
 
-		/* c2 speed */
+		/* C2 speed */
 		if (s3minstheader[34] || s3minstheader[35])
 			puts("WARNING: C2 speed is too high, it will be truncated!");
 
@@ -167,9 +167,9 @@ void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptabo
 		/* default volume */
 		stmSampHeader[22] = 0;
 
-		/* c2 speed */
-		stmSampHeader[24] = 0x21;
-		stmSampHeader[25] = 0x00;
+		/* C2 speed */
+		stmSampHeader[24] = 0x00;
+		stmSampHeader[25] = 0x21;
 	}
 }
 
@@ -190,9 +190,9 @@ void generateBlankSample() {
 	/* default volume */
 	stmSampHeader[22] = 0;
 
-	/* c2 speed */
-	stmSampHeader[24] = 0x21;
-	stmSampHeader[25] = 0x00;
+	/* C2 speed */
+	stmSampHeader[24] = 0x00;
+	stmSampHeader[25] = 0x21;
 }
 
 int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size) {
