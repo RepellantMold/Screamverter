@@ -560,3 +560,4 @@ ST/*
 build/*
 *.[cC][oO][mM]
 *.[dD][bB][gG]
+!build/HappyTechno.s3m
