@@ -196,12 +196,12 @@ void generateBlankSample() {
 }
 
 int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size) {
+	unsigned int l;
+	unsigned char padding;
 	/* if the pointer or size aren't set, ignore it */
 	if (instdatptr == 0 || size == 0) return 0;
 	puts("Converting sample data...");
 	printf("Sample size: %u\nPointer: %08X\n", size, instdatptr);
-	register unsigned int l;
-	unsigned char padding = 0x00;
 	fseek(inS3M, instdatptr, SEEK_SET);
 
 	sampleData = (unsigned char*)malloc(size);

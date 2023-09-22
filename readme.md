@@ -10,6 +10,7 @@ You can compile manually
 ```bash
 $ cc main.c pattern.c sample.c 
 ```
+This can also be compiled with Borland Turbo C/Microsoft Quick C.
 
 # Requirements for a decent conversion
 

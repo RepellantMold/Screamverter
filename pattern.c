@@ -18,6 +18,7 @@ unsigned char s3mPatArray[64][16][5];
 int readS3MPattern(FILE *inS3M, unsigned short pointer) {
 	register unsigned char cv = 0;
 	register unsigned char r = 0, c = 0;
+	unsigned char *p;
 	unsigned char s3mNote = 255, s3mIns = 0, s3mVol = 255, s3mEff = 0, s3mParam = 0;
 	unsigned short packedlen;
 	fseek(inS3M, pointer, SEEK_SET);
@@ -37,7 +38,7 @@ int readS3MPattern(FILE *inS3M, unsigned short pointer) {
 
 	fread(s3mPat, sizeof(char), packedlen, inS3M);
 
-	unsigned char *p = s3mPat;
+	p = s3mPat;
 
 	/* for every row... */
 	for (; r < 64; ++r) {

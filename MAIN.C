@@ -134,10 +134,10 @@ int main(int argc, char *argv[]) {
 			patptrArray[p] <<= 4;
 		}
 
-		if (ordCnt > 128) puts("WARNING: more than 128 orders found!");
+		if (ordCnt > 127) puts("WARNING: more than 128 orders found!");
 		else printf("Found %d orders.\n", ordCnt);
 
-		if (patCnt > 99) puts("WARNING: more than 99 patterns found!");
+		if (patCnt > 98) puts("WARNING: more than 99 patterns found!");
 		else printf("Found %d patterns.\n", patCnt);
 
 		if (insCnt > 30) puts("WARNING: more than 31 samples found!");
@@ -174,17 +174,17 @@ int main(int argc, char *argv[]) {
 		}
 
 		/* add padding */
-		fwrite(&padding, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
+		generate16BytePadding(outSTM);
 
 		/* now grab the data */
 		for (s = 0; s < 30; ++s) {
 			/* generate the "paragraph" */
 			unsigned char pointer[2] = { 0x00, 0x00 };
-			beforeposition = ftell(outSTM) >> 4;
-			pointer[0] = beforeposition;
-			pointer[1] = beforeposition >> 8;
+			beforeposition = (unsigned int)ftell(outSTM) >> 4;
+			pointer[0] = (unsigned char)beforeposition;
+			pointer[1] = (unsigned char)beforeposition >> 8;
 			convertSampleData(inS3M, outSTM, instdatptrArray[s], savedsamplelengths[s]);
-			afterposition = ftell(outSTM);
+			afterposition = (unsigned int)ftell(outSTM);
 
 			/* correct the pointer in the sample header that we couldn't get before. */
 			/* printf("%04X\n", (pointer[1] << 8) + pointer[0]); */
@@ -211,5 +211,5 @@ int main(int argc, char *argv[]) {
 
 void generate16BytePadding(FILE *outSTM) {
 	unsigned char paddingByte = 0;
-	fwrite(&paddingByte, sizeof(char), 16 - (ftell(outSTM) % 16), outSTM);
+	fwrite(&paddingByte, sizeof(char), (unsigned int)16 - (ftell(outSTM) % 16), outSTM);
 }

@@ -558,3 +558,5 @@ FodyWeavers.xsd
 Makefile
 ST/*
 build/*
+*.[cC][oO][mM]
+*.[dD][bB][gG]
