@@ -1,6 +1,10 @@
 # Screamverter
 
-Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
+Scream Tracker 3 module to Scream Tracker 2 module converter written in ANSI C.
+
+# License
+
+[0MIT/MIT-0/MIT No Attribution](LICENSE), it can be relicensed under users discretion under any other license. (WTFPL, GPL, BSD, standard MIT, MPL, etc.)
 
 # Compiling
 
@@ -35,7 +39,3 @@ It'd probably be a lot to ask of one person to convert an S3M file to an STM...
 |    Mxx |      (No-op)      | Ditto again.                                                                                                                                                                   |
 |    Nxx |      (No-op)      | Ditto yet again.                                                                                                                                                               |
 |    Oxx |      (No-op)      | Do you get it now?..                                                                                                                                                           |
-
-# License
-
-[0MIT/MIT-0/MIT No Attribution](LICENSE), it can be relicensed under users discretion.

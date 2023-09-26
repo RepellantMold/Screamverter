@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void convertSample(FILE* S3M, FILE* STM);
+void generateSample(FILE* STM);
+
 unsigned char stmSampHeader[32] = {
         /* sample title (ASCIIZ) */
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -35,7 +38,14 @@ unsigned char stmSampHeader[32] = {
 
 };
 
-void generateSample()
+void
+convertSample(FILE* S3M, FILE* STM)
+{
+    return;
+}
+
+void
+generateSample(FILE* STM)
 {
     return;
 }
