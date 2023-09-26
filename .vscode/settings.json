@@ -4,5 +4,10 @@
                         "optimizeStylesheetParsing": true
                 }
         ],
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "diffEditor.wordWrap": "off",
+        "debug.console.wordWrap": false,
+        "[markdown]": {
+                "editor.wordWrap": "off"
+        }
 }

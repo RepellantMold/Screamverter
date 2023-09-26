@@ -41,17 +41,19 @@ extern int conv_s3mpat_to_stmpat(char *s3mpat, char *stmpat);
 int
 main(int argc, char *argv[])
 {
-    puts("Screamverter, a Scream Tracker 3 module to 2 downgrader"
-         "by RepellantMold (2023)\n"
-         "This code is licensed under MIT-0.\n");
+    puts("Screamverter, a Scream Tracker 3 module to 2 downgrader\n"
+         "Made by RepellantMold under MIT No Attribution\n");
 
     unsigned char insNum = 0, patNum = 0, ordNum = 0;
+    unsigned char i = 0, p = 0, o = 0;
 
-    
     if (argc == 3) {
         FILE* S3M = fopen(argv[1], "rb");
         FILE* STM = fopen(argv[2], "wb");
         convertheader_S3MtoSTM(S3M, STM);
+        for(o = 0; o < ordNum; o++) {
+            printf("order %d", o);
+        }
         fclose(S3M);
         fclose(STM);
     } else if (argc > 3) {

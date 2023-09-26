@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-void convertSample(FILE* S3M, FILE* STM);
-void generateSample(FILE* STM);
+int convertSample(FILE* S3M, FILE* STM);
+int generateSample(FILE* STM);
 
 unsigned char stmSampHeader[32] = {
         /* sample title (ASCIIZ) */
@@ -38,14 +38,22 @@ unsigned char stmSampHeader[32] = {
 
 };
 
-void
+unsigned char* instrumentPointers, samplePointers;
+
+int
 convertSample(FILE* S3M, FILE* STM)
 {
-    return;
+    fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), STM);
+    return 0;
 }
 
-void
+int
 generateSample(FILE* STM)
 {
-    return;
+    /* clear the metadata */
+    memset(stmSampHeader, 0, 19);
+    memset(&stmSampHeader[20], 0xFF, 2);
+
+    fwrite(stmSampHeader, sizeof(char), sizeof(stmSampHeader), STM);
+    return 0;
 }

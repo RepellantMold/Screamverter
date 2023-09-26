@@ -1,0 +1,1 @@
+These are my own attempts to get information on the formats.
