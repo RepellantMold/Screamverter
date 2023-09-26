@@ -16,11 +16,63 @@ their unportable versions of the library. |:c */
 #include <stdlib.h>
 #include <string.h>
 
-#include "main.h"
-#include "pattern.h"
-#include "sample.h"
+unsigned char stmSongHeader[48] = {
 
+	/* song title (ASCIIZ, 20 characters) */
+	'S', 'r', 'e', 'a', 'm', 'v', 'e', 'r', 't', 'i', 'o', 'n', 0, 0, 0, 0, 0, 0, 0, 0,
+	/* magic */
+	'!', 'S', 'c', 'r', 'e', 'a', 'm', '!',
+	/* DOS EoF */
+	0x1A,
+	/* file type (module) */
+	2,
+	/* Major/minor version (2.21) */
+	2, 21,
+	/* intial tempo */
+	0x60,
+	/* number of patterns */
+	0x00,
+	/* global volume */
+	64,
+	/* ??? */
+	'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X'
 
+};
+
+/* 99 (decimal) means no pattern (I think?...) */
+unsigned char stmOrdTable[128] = {
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
+	99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99
+};
+
+/* function prototypes (main) */
+void generate16BytePadding(FILE *outSTM);
+
+/* function prototypes (pattern) */
+extern int readS3MPattern(FILE *inS3M, unsigned short pointer);
+extern int convertPattern(FILE* outSTM);
+extern unsigned char* s3mPat;
+extern unsigned short patptrArray[255];
+extern unsigned char channelRemap[32];
+
+/* function prototypes (sample) */
+extern void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptaboffs);
+extern void generateBlankSample();
+extern int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size);
+extern unsigned int crc32(unsigned char buf[], unsigned int buf_len);
+extern unsigned int xorshift32(register unsigned int state);
+extern unsigned short instptrArray[99];
+extern unsigned int instdatptrArray[99];
+extern unsigned char stmSampHeader[32];
+extern unsigned short savedsamplelengths[99];
+
+/* actual main function */
 int main(int argc, char *argv[]) {
 	unsigned char *s3mHeader;
 

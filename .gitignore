@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio
+# Created by https://www.toptal.com/developers/gitignore/api/windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio,cmake
+# Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio,cmake
 
 ### C ###
 # Prerequisites
@@ -54,6 +54,23 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+### CMake ###
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+### CMake Patch ###
+# External projects
+*-prefix/
 
 ### CodeBlocks ###
 # specific to CodeBlocks IDE
@@ -541,7 +558,7 @@ FodyWeavers.xsd
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio
+# End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,c,codeblocks,visualstudiocode,visualstudio,cmake
 
 *.[sS][yY][mM]
 *.[mM][dD][tT]
@@ -554,10 +571,9 @@ FodyWeavers.xsd
 
 *.sln
 *.vcxproj
-*.make
 Makefile
 ST/*
 build/*
 *.[cC][oO][mM]
 *.[dD][bB][gG]
-!build/HappyTechno.s3m
+!testset/HappyTechno.s3m

@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sample.h"
+
+void convertSample(FILE* inS3M, unsigned short parapointer, unsigned char pptaboffs);
+void generateBlankSample();
+int convertSampleData(FILE* inS3M, FILE* outSTM, unsigned int instdatptr, unsigned short size);
+extern void generate16BytePadding(FILE* outSTM);
+
+unsigned int crc32(unsigned char buf[], unsigned int buf_len);
+unsigned int xorshift32(register unsigned int state);
 
 unsigned short instptrArray[99];
 unsigned int instdatptrArray[99];

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "pattern.h"
+
+int readS3MPattern(FILE *inS3M, unsigned short pointer);
+int convertPattern(FILE* outSTM);
 
 unsigned char* s3mPat;
 unsigned short patptrArray[255];
