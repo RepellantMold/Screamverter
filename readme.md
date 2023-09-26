@@ -4,13 +4,7 @@ Scream Tracker 3 module to Scream Tracker 2 module converter written in C.
 
 # Compiling
 
-~~It should be as simple as running xmake~~
-(having problems with linking, I hope to fix this at one point...)
-You can compile manually
-```bash
-$ cc main.c pattern.c sample.c 
-```
-This can also be compiled with Borland Turbo C/Microsoft Quick C.
+It can be built with CMake, or compiled manually (which shouldn't be too difficult to do.)
 
 # Requirements for a decent conversion
 
