@@ -10,6 +10,8 @@
 int parsepattern(FILE* S3M, unsigned short location, unsigned char num);
 int conv_s3mpat_to_stmpat(char *s3mpat, char *stmpat);
 
+unsigned char* patternPointers;
+
 unsigned char unpacked_s3mpat[64][32][5];
 
 int

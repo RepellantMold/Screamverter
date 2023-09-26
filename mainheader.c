@@ -44,16 +44,17 @@ unsigned char stmOrdTable[128] = {
     99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99
 };
 
-    /* define some external variables */
-    extern unsigned char insNum = 0, patNum = 0, ordNum = 0;
-    extern unsigned char* instrumentPointers, samplePointers;
-    extern int convertSample(FILE* S3M, FILE* STM);
-    extern int generateSample(FILE* STM);
+/* define some external variables */
+extern unsigned char insNum = 0, patNum = 0, ordNum = 0;
+extern unsigned char* instrumentPointers, samplePointers;
+extern int convertSample(FILE* S3M, FILE* STM, unsigned short pointer, unsigned char num);
+extern int generateSample(FILE* STM);
 
 int
 convertheader_S3MtoSTM(FILE* S3M, FILE* STM) {
     unsigned char i = 0, p = 0, o = 0, a = 0;
     unsigned char* s3mHeader = (unsigned char*)malloc(96);
+    unsigned int pointer;
 
     if (s3mHeader == NULL) {
         puts("Memory allocation failed.");
@@ -89,8 +90,6 @@ convertheader_S3MtoSTM(FILE* S3M, FILE* STM) {
         return 1;
     }
 
-    printf("%08X\n", ftell(S3M));
-
     /* Read the order table from the S3M pattern */
     fread(s3mOrdTable, sizeof(char), ordNum, S3M);
 
@@ -106,9 +105,28 @@ convertheader_S3MtoSTM(FILE* S3M, FILE* STM) {
 
     printf("%02u patterns found with %02u orders\n", patNum, a);
 
+    /* convert instrument parapointers to regular pointers */
+    unsigned short* instrumentPointers = (unsigned short*)calloc(insNum, sizeof(short));
+
+    if (instrumentPointers == NULL) {
+        puts("Memory allocation failed.");
+        return 1;
+    }
+
+    fread(instrumentPointers, 2, insNum, S3M);
+
+    for (i = 0; i < insNum; i++) {
+        /* printf("%04X -> ", instrumentPointers[i]); */
+        instrumentPointers[i] <<= 4;
+        /* printf("%04X\n", instrumentPointers[i]); */
+    }
+
     /* Do sample headers */
-    for (i = 0; i < 30; ++i) {
-        if (i < insNum) convertSample(S3M, STM);
+    for (i = 0; i < 31; ++i) {
+        if (i < insNum) {
+            pointer = instrumentPointers[i];
+            convertSample(S3M, STM, pointer, i);
+        }
         else generateSample(STM);
     }
 

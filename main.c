@@ -29,14 +29,16 @@ their unportable versions of the library. |:c */
 #include <stdlib.h>
 #include <string.h>
 
-/* external function declarations */
+/* external declarations */
 extern int convertheader_S3MtoSTM(FILE* S3M, FILE* STM);
 
-extern void convertSample(FILE* S3M, FILE* STM);
+extern void convertSample(FILE* S3M, FILE* STM, unsigned short pointer);
 extern void generateSample(FILE* STM);
 
 extern int parsepattern(FILE* S3M, unsigned short location, unsigned char num);
 extern int conv_s3mpat_to_stmpat(char *s3mpat, char *stmpat);
+
+extern unsigned char* instrumentPointers, dataPointers, patternPointers;
 
 int
 main(int argc, char *argv[])
@@ -46,14 +48,13 @@ main(int argc, char *argv[])
 
     unsigned char insNum = 0, patNum = 0, ordNum = 0;
     unsigned char i = 0, p = 0, o = 0;
+    unsigned int pointer = 0;
 
     if (argc == 3) {
         FILE* S3M = fopen(argv[1], "rb");
         FILE* STM = fopen(argv[2], "wb");
         convertheader_S3MtoSTM(S3M, STM);
-        for(o = 0; o < ordNum; o++) {
-            printf("order %d", o);
-        }
+        
         fclose(S3M);
         fclose(STM);
     } else if (argc > 3) {
