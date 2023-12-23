@@ -19,13 +19,13 @@ There's also no warranty, so I can't be held responsible for any damage from use
 
 # Compiling
 
-It can be built with CMake, or compiled manually (which shouldn't be too difficult to do.)
+It can be built with CMake, or compiled manually (which shouldn't be too difficult to do, e.g. with clang: `clang -std=c89 main.c`)
 
-I mainly tested this under a virtual DOS environment, with Microsoft Quick C.
+I mainly tested this under a virtual DOS environment, with Microsoft Quick C. (I used `qcl /AT /G0 /Gs main.c`)
 
 # How to use
 
-Call the executable with an input and output file inside your terminal.
+Call the executable with an input and output file inside your terminal. (`[executable] input.s3m output.s3m`)
 
 > [!IMPORTANT]
 > These are required to have a decent conversion
@@ -45,7 +45,10 @@ Call the executable with an input and output file inside your terminal.
 > 
 > # Patterns
 > 
-> - Only use the effects listed in the effects table listed below
+> - Only use the effects A to J (caveats shown in the note below)
+
+> [!NOTE]
+> Not all effects are compatible, here's a table showing all the effects that are available
 > 
 > | Effect | Function (in ST2) | Notes (Effect memory **does not exist** in Scream Tracker 2, it'll get treated as a no-op!)                                                                                    |
 > | -----: | :---------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
