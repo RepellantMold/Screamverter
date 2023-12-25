@@ -8,7 +8,7 @@ Scream Tracker 3 module to Scream Tracker 2.21+ module converter written in ANSI
 > In its current state, it can only convert the main song/sample headers.
 > I'm open to anyone completing it via a fork (credits for the original work are appreciated but not requried!)
 > 
-> This branch (v2) is what I had stored on a repository on Codeberg last month.
+> This branch (v3) is what I had stored on a repository on Codeberg last month.
 > 
 > All the others are from this Github repository.
 
