@@ -15,6 +15,7 @@ typedef struct {
 } Pattern_Context;
 
 void parse_s3m_pattern(FILE* file, usize position);
+void parse_mod_pattern(FILE* file, usize position);
 
 void convert_s3m_pattern_to_stm(void);
 void convert_s3m_pattern_to_stx(FILE* file);

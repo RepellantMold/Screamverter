@@ -7,6 +7,7 @@
 #include "ext.h"
 #include "main.h"
 
+#include "fmt/mod.h"
 #include "fmt/s3m.h"
 #include "fmt/stm.h"
 #include "fmt/stx.h"
@@ -16,7 +17,6 @@
 #include "parapnt.h"
 #include "sample.h"
 #include "song_header.h"
-
 
 #include "crc.h"
 
@@ -207,6 +207,12 @@ void convert_song_header_s3mtostx(void) {
   stx_song_header.total_orders = order_count;
 }
 
+void convert_song_header_modtostm(void) {
+  strncpy((char*)stm_song_header.title, (char*)mod_song_header.title, 19);
+  stm_song_header.total_patterns = pattern_count;
+  stm_song_header.initial_tempo = 0x60;
+}
+
 void convert_song_orders_s3mtostm(usize length) {
   register usize i = 0;
 
@@ -217,7 +223,7 @@ void convert_song_orders_s3mtostm(usize length) {
       break;
 
     stm_order_list[i] = (s3m_order_array[i] > STM_MAXPAT) ? STM_ORDER_END : s3m_order_array[i];
-  } while (++i < STM_ORDER_LIST_SIZE);
+  } while (++i < MOD_ORDNUM_MAX);
 }
 
 void convert_song_orders_s3mtostx(usize length, u8* order_list) {
@@ -230,4 +236,21 @@ void convert_song_orders_s3mtostx(usize length, u8* order_list) {
     /* I have no idea why STX specifically has its order list like this... */
     order_list[i * STX_ORDERMULTIPLIER] = s3m_order_array[i];
   } while (++i < length);
+}
+
+void grab_mod_song_header(FILE* MODfile) {
+  register usize i = 0;
+  fread(mod_song_header.title, 20, 1, MODfile);
+  fseek(MODfile, MOD_ORDNUM_PTR, SEEK_SET);
+  mod_song_header.total_orders = fgetb(MODfile);
+  mod_song_header.restart_position = fgetb(MODfile);
+  fread(mod_song_header.orders, 128, 1, MODfile);
+
+  for (; i < mod_song_header.total_orders; i++) {
+    if (mod_song_header.orders[i] > pattern_count - 1)
+    {
+      pattern_count = mod_song_header.orders[i] + 1;
+      break;
+    }
+  }
 }

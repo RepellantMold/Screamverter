@@ -38,6 +38,7 @@ void print_help(void) {
   puts("  -s, --sanitize   Sanitize sample names during conversion, useful for saving them on DOS");
   puts("  -m, --memory     Handle effects calling effect memory (helps with Scream Tracker 2.24 and below)");
   puts("  -2, --stm        Convert the S3M to STM (default)");
+  puts("  -a, --mod        Convert the MOD to STM (unfinished)");
   puts("  -x, --stx        Convert the S3M to STX (unfinished)");
   puts("  -i, --input      Input file");
   puts("  -o, --output     Output file");
@@ -51,6 +52,8 @@ u16 s3m_inst_pointers[S3M_MAXSMP] = {0};
 u16 s3m_pat_pointers[S3M_MAXPAT] = {0};
 u32 s3m_pcm_pointers[S3M_MAXSMP] = {0};
 u16 s3m_pcm_lens[S3M_MAXSMP] = {0};
+u16 mod_pcm_lens[MOD_MAXSMP] = {0};
+u32 mod_pcm_pointers[MOD_MAXSMP] = {0};
 u16 s3m_cwtv;
 
 static char input_filename[4096], output_filename[4096];
@@ -67,10 +70,11 @@ int main(int argc, char* argv[]) {
 
   int option;
   struct optparse options;
-  struct optparse_long longopts[] = {
-      {"sanitize", 's', OPTPARSE_NONE},  {"verbose", 'v', OPTPARSE_NONE},    {"memory", 'm', OPTPARSE_NONE},
-      {"help", 'h', OPTPARSE_NONE},      {"stm", '2', OPTPARSE_NONE},        {"stx", 'x', OPTPARSE_NONE},
-      {"input", 'i', OPTPARSE_REQUIRED}, {"output", 'o', OPTPARSE_REQUIRED}, {0}};
+  struct optparse_long longopts[] = {{"sanitize", 's', OPTPARSE_NONE},   {"verbose", 'v', OPTPARSE_NONE},
+                                     {"memory", 'm', OPTPARSE_NONE},     {"help", 'h', OPTPARSE_NONE},
+                                     {"stm", '2', OPTPARSE_NONE},        {"stx", 'x', OPTPARSE_NONE},
+                                     {"mod", 'a', OPTPARSE_NONE},        {"input", 'i', OPTPARSE_REQUIRED},
+                                     {"output", 'o', OPTPARSE_REQUIRED}, {0}};
 
   if (argc < 2) {
   print_da_help:
@@ -85,6 +89,7 @@ int main(int argc, char* argv[]) {
       case 's': main_context.flags.sanitize_sample_names = true; break;
       case 'm': main_context.flags.handle_effect_memory = true; break;
       case '2': conversion_type = FOC_S3MTOSTM; break;
+      case 'a': conversion_type = FOC_MODTOSTM; break;
       case 'x': conversion_type = FOC_S3MTOSTX; break;
       case 'i': strncpy(input_filename, options.optarg, sizeof(input_filename)); break;
       case 'o': strncpy(output_filename, options.optarg, sizeof(output_filename)); break;
@@ -109,6 +114,7 @@ int main(int argc, char* argv[]) {
   srand((u32)time(0));
 
   switch (conversion_type) {
+    case FOC_MODTOSTM: return_value |= convert_mod_to_stm(&main_context); break;
     case FOC_S3MTOSTM: return_value |= convert_s3m_to_stm(&main_context); break;
     case FOC_S3MTOSTX: return_value |= convert_s3m_to_stx(&main_context); break;
   }

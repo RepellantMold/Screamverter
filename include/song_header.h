@@ -9,6 +9,8 @@
 void show_s3m_song_header(void);
 void grab_s3m_song_header(FILE* S3Mfile);
 void grab_s3m_orders(FILE* file);
+void grab_mod_song_header(FILE* MODfile);
+void convert_song_header_modtostm(void);
 void check_s3m_channels(void);
 void convert_song_header_s3mtostm(void);
 void convert_song_header_s3mtostx(void);

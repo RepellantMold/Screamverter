@@ -11,7 +11,7 @@
 
 extern u8 original_order_count, order_count, sample_count, pattern_count;
 
-enum FOC_ConversionMode { FOC_S3MTOSTM = 0x00, FOC_S3MTOSTX = 0x01 };
+enum FOC_ConversionMode { FOC_S3MTOSTM = 0x00, FOC_S3MTOSTX = 0x01, FOC_MODTOSTM = 0x02 };
 
 typedef struct {
   FILE* infile;
@@ -30,13 +30,14 @@ typedef struct {
 enum FOC_ReturnCode {
   FOC_SUCCESS = 0x00,
   FOC_OPEN_FAILURE = 0x01,
-  FOC_NOT_S3M_FILE = 0x02,
-  FOC_MALFORMED_FILE = 0x04,
-  FOC_CONV_FAILURE = 0x08,
-  FOC_ALLOC_FAIL = 0x10,
-  FOC_MALFORMED_BUFFER = 0x20,
-  FOC_NO_FILENAMES = 0x40,
-  FOC_SAMPLE_FAIL = 0x80
+  FOC_MALFORMED_FILE = 0x02,
+  FOC_CONV_FAILURE = 0x04,
+  FOC_ALLOC_FAIL = 0x08,
+  FOC_MALFORMED_BUFFER = 0x10,
+  FOC_NO_FILENAMES = 0x20,
+  FOC_SAMPLE_FAIL = 0x40,
+  FOC_NOT_S3M_FILE = 0x100,
+  FOC_NOT_MOD_FILE = 0x200
 };
 
 extern internal_state_t main_context;

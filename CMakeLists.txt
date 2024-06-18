@@ -19,5 +19,6 @@ add_executable( screamverter
                 src/parapnt.c
                 src/pattern.c
                 src/sample.c
-                src/tostm.c
-                src/tostx.c)
+                src/amiga.c
+                src/xtostm.c
+                src/xtostx.c)

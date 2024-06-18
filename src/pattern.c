@@ -5,12 +5,13 @@
 #include "envcheck.h"
 #include "ext.h"
 
+#include "effects.h"
 #include "file.h"
 #include "log.h"
 #include "main.h"
 #include "pattern.h"
-#include "effects.h"
 
+#include "fmt/mod.h"
 #include "fmt/s3m.h"
 #include "fmt/stm.h"
 
@@ -136,6 +137,55 @@ void parse_s3m_pattern(FILE* file, usize position) {
     print_s3m_pattern(STM_MAXCHN);
 }
 
+void parse_mod_pattern(FILE* file, usize position) {
+  register u8 channel = 0, row = 0, byte = 0;
+  u8 tmp[4], effect = 0;
+
+  if (!file || !position)
+    return;
+  if (feof(file) || ferror(file))
+    return;
+
+  fseek(file, (long)position, SEEK_SET);
+
+  do {
+    for (channel = 0; channel < MOD_MAXCHN; ++channel) {
+      fread(tmp, 4, 1, file);
+
+      unpacked_pattern[row][channel].note = convert_pattern_period_to_note(((tmp[0] & 0x0F) << 8) + tmp[1]);
+      unpacked_pattern[row][channel].ins = (tmp[0] & 0xF0) + (tmp[2] >> 4);
+      unpacked_pattern[row][channel].vol = ((tmp[2] & 0x0F) == 0x0C) ? tmp[3] : 0xFF;
+
+      switch (tmp[2] & 0x0F) {
+        case 0x00:
+          if (tmp[3]) {
+            effect = EFF_ARPEGGIO;
+            break;
+          }
+
+        case 0x0C: effect = EFF_NO_EFFECT; break;
+        case 0x01: effect = EFF_PORTA_UP; break;
+        case 0x02: effect = EFF_PORTA_DOWN; break;
+        case 0x03: effect = EFF_TONE_PORTA; break;
+        case 0x04: effect = EFF_VIBRATO; break;
+        case 0x0A: effect = EFF_VOLUME_SLIDE; break;
+        case 0x0B: effect = EFF_SET_POSITION; break;
+        case 0x0F: effect = EFF_SET_TEMPO; break;
+
+        default:
+          print_warning("Unknown effect: %02X", tmp[2] & 0x0F);
+          effect = 0x00;
+          break;
+      }
+      unpacked_pattern[row][channel].eff = effect;
+      unpacked_pattern[row][channel].prm = tmp[3];
+    }
+  } while (++row < MAXROWS);
+
+  if (main_context.flags.verbose_mode)
+    print_s3m_pattern(MOD_MAXCHN);
+}
+
 void flush_s3m_pattern_array(void) {
   register usize row = 0, channel = 0;
   do {
@@ -157,8 +207,7 @@ void convert_s3m_pattern_to_stm(void) {
   do {
     for (channel = 0; channel < STM_MAXCHN; ++channel) {
       pattern.row = (u8)row, pattern.channel = (u8)channel;
-      pattern.note = unpacked_pattern[row][channel].note,
-      pattern.instrument = unpacked_pattern[row][channel].ins,
+      pattern.note = unpacked_pattern[row][channel].note, pattern.instrument = unpacked_pattern[row][channel].ins,
       pattern.volume = unpacked_pattern[row][channel].vol, pattern.effect = unpacked_pattern[row][channel].eff,
       pattern.parameter = unpacked_pattern[row][channel].prm;
 

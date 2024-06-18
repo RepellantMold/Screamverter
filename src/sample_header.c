@@ -7,6 +7,7 @@
 #include "ext.h"
 #include "main.h"
 
+#include "fmt/mod.h"
 #include "fmt/s3m.h"
 #include "fmt/stm.h"
 #include "fmt/stx.h"
@@ -16,6 +17,7 @@
 #include "parapnt.h"
 #include "sample.h"
 #include "sample_header.h"
+#include "amiga.h"
 
 #include "crc.h"
 
@@ -30,6 +32,20 @@ void show_s3m_inst_header(void) {
          "C frequency: %06lu\n"
          "Length/Loop start/end: %06lu/%06lu/%06lu\n",
          s3m_inst_header.name, s3m_inst_header.filename, default_volume, sample_flags, c_frequency, length, loop_start,
+         loop_end);
+}
+
+void show_mod_inst_header(mod_sample_header_t header) {
+  const u8 default_volume = header.default_volume, fine_tune = header.fine_tune;
+  const u32 c_frequency = convert_finetune_value_to_c_frequency(header.fine_tune), length = header.length,
+            loop_start = header.loop_start, loop_length = header.loop_length, loop_end = loop_start + loop_length;
+
+  printf("Sample name: %.22s\n"
+         "Default volume: %02u\n"
+         "C frequency: %04lu\n"
+         "Fine tune: %1d\n"
+         "Length/Loop start/end: %06lu/%06lu/%06lu\n",
+         header.name, default_volume, c_frequency, fine_tune, length, loop_start,
          loop_end);
 }
 
@@ -59,6 +75,44 @@ void grab_s3m_instrument_header_data(FILE* file, usize position) {
   fread(s3m_inst_header.reserved2, 12, 1, file);
   fread(s3m_inst_header.name, 28, 1, file);
   fread(s3m_inst_header.scrs, 4, 1, file);
+}
+
+void grab_mod_instrument_header_data(FILE* file) {
+  register usize i = 0;
+  
+
+  if (!file || feof(file) || ferror(file))
+    return;
+  fseek(file, (long)MOD_SAMPLES_PTR, SEEK_SET);
+
+  for (; i < MOD_MAXSMP; i++) {
+    fread(mod_song_header.samples[i].name, 22, 1, file);
+    mod_song_header.samples[i].length = grab_mod_length_value(file);
+    mod_song_header.samples[i].fine_tune = fgetb(file);
+    mod_song_header.samples[i].default_volume = fgetb(file);
+    mod_song_header.samples[i].loop_start = grab_mod_length_value(file);
+    mod_song_header.samples[i].loop_length = grab_mod_length_value(file);
+  }
+}
+
+u16 grab_mod_length_value(FILE* file) {
+  u8 tmp[2] = {0};
+
+  if (!file || feof(file) || ferror(file))
+    return -1;
+
+  tmp[0] = fgetb(file);
+  tmp[1] = fgetb(file);
+  return (u16)((tmp[0] << 8 | tmp[1]) << 1);
+}
+
+u16 turn_mod_word_into_bytes(u16 value) {
+  u8 tmp[2] = {0};
+
+  tmp[0] = value >> 8;
+  tmp[1] = value & 0xFF;
+
+  return (u16)((tmp[0] << 8 | tmp[1]) << 1);
 }
 
 void sanitize_sample_name(char* name) {
@@ -177,6 +231,22 @@ void convert_s3m_instrument_header_s3mtostm(stm_instrument_header_t* stm_sample_
       goto generateblanksample;
       break;
   }
+}
+
+void convert_mod_instrument_header_modtostm(stm_instrument_header_t* stm_sample_header, mod_sample_header_t mod_inst_header) {
+    if (!main_context.flags.sanitize_sample_names)
+      return;
+
+    memcpy((char*)stm_sample_header->filename, (char*)&mod_inst_header.name, 12);
+
+    sanitize_sample_name((char*)stm_sample_header->filename);
+
+      stm_sample_header->disk = 0;
+      stm_sample_header->length = mod_inst_header.length;
+      stm_sample_header->loop_start = mod_inst_header.loop_start;
+      stm_sample_header->loop_end = mod_inst_header.loop_start + mod_inst_header.loop_length;
+      stm_sample_header->default_volume = mod_inst_header.default_volume;
+      stm_sample_header->c_speed = convert_finetune_value_to_c_frequency(mod_inst_header.fine_tune);
 }
 
 u32 grab_s3m_pcm_pointer(void) {

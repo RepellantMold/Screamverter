@@ -1,5 +1,6 @@
 #ifndef __CONV_H
 #define __CONV_H
+#include "fmt/mod.h"
 #include "fmt/s3m.h"
 #include "fmt/stm.h"
 #include "fmt/stx.h"
@@ -13,6 +14,7 @@
 #include "sample.h"
 #include "sample_header.h"
 #include "song_header.h"
+#include "amiga.h"
 
 
 void convert_song_header_s3mtostm(void);
