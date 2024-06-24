@@ -167,7 +167,7 @@ int convert_mod_to_stm(internal_state_t* context) {
 
   grab_mod_song_header(MODfile);
 
-  memcpy(stm_order_list, mod_song_header.orders, STM_ORDER_LIST_SIZE);
+  memmove(stm_order_list, mod_song_header.orders, mod_song_header.total_orders);
 
   if (pattern_count > STM_MAXPAT)
     print_warning("Pattern count exceeds 63 (%u > 63), only converting 63.", pattern_count);

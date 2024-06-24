@@ -5,6 +5,7 @@
 #include "envcheck.h"
 #include "ext.h"
 
+#include "amiga.h"
 #include "effects.h"
 #include "file.h"
 #include "log.h"
@@ -138,7 +139,8 @@ void parse_s3m_pattern(FILE* file, usize position) {
 }
 
 void parse_mod_pattern(FILE* file, usize position) {
-  register u8 channel = 0, row = 0, byte = 0;
+  register u8 channel = 0, row = 0;
+  u16 note = 0;
   u8 tmp[4], effect = 0;
 
   if (!file || !position)
@@ -152,11 +154,14 @@ void parse_mod_pattern(FILE* file, usize position) {
     for (channel = 0; channel < MOD_MAXCHN; ++channel) {
       fread(tmp, 4, 1, file);
 
-      unpacked_pattern[row][channel].note = convert_pattern_period_to_note(((tmp[0] & 0x0F) << 8) + tmp[1]);
-      unpacked_pattern[row][channel].ins = (tmp[0] & 0xF0) + (tmp[2] >> 4);
-      unpacked_pattern[row][channel].vol = ((tmp[2] & 0x0F) == 0x0C) ? tmp[3] : 0xFF;
+      note = (u16)(((tmp[0] & 0x0F) << 8) + tmp[1]);
+      effect = (tmp[2] & 0x0F);
 
-      switch (tmp[2] & 0x0F) {
+      unpacked_pattern[row][channel].note = convert_pattern_period_to_note(note);
+      unpacked_pattern[row][channel].ins = (tmp[0] & 0xF0) + (tmp[2] >> 4);
+      unpacked_pattern[row][channel].vol = (effect == 0x0C) ? tmp[3] : 0xFF;
+
+      switch (effect) {
         case 0x00:
           if (tmp[3]) {
             effect = EFF_ARPEGGIO;
@@ -173,7 +178,7 @@ void parse_mod_pattern(FILE* file, usize position) {
         case 0x0F: effect = EFF_SET_TEMPO; break;
 
         default:
-          print_warning("Unknown effect: %02X", tmp[2] & 0x0F);
+          print_warning("Unknown effect: %02X", effect);
           effect = 0x00;
           break;
       }
